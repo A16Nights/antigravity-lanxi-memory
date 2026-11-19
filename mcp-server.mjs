@@ -1,0 +1,310 @@
+#!/usr/bin/env node
+import readline from "node:readline";
+import { LanxiEngine, VALID_LAYERS } from "./lib/engine.mjs";
+
+const engine = new LanxiEngine();
+
+const TOOLS = [
+  {
+    name: "cg_write",
+    description: "写入长期记忆节点到 Markdown 认知图（自动校验与去重；importance >= 0.7 或 anchor/self 层自动开启硬保护）。",
+    inputSchema: {
+      type: "object",
+      required: ["content"],
+      properties: {
+        content: { type: "string", description: "记忆正文，支持 Markdown 与 [[目标ID]] 双向链接" },
+        title: { type: "string", description: "可选标题（不填则自动从正文首行提取）" },
+        layer: {
+          type: "string",
+          enum: VALID_LAYERS,
+          description: "分层：anchor（永久锚点）、self（自我认知）、structural（架构/规律）、knowledge（通用知识，默认）、episodic（情景事件）、goals（目标）、unresolved（待解决问题）"
+        },
+        importance: { type: "number", description: "重要度 0~1，默认 0.5；>= 0.7 自动开启硬保护" },
+        tags: { type: "array", items: { type: "string" }, description: "标签数组" },
+        aliases: { type: "array", items: { type: "string" }, description: "别名数组" },
+        valid_until: { type: "number", description: "可选过期 Unix 秒时间戳" },
+        protected: { type: "boolean", description: "是否强制启用防衰减硬保护" }
+      }
+    }
+  },
+  {
+    name: "cg_recall",
+    description: "按关键词、分层与潮汐加权检索记忆（若已配置 Embedding API 则自动执行 FTS5 + 向量语义混合召回），并强化命中节点。",
+    inputSchema: {
+      type: "object",
+      required: ["query"],
+      properties: {
+        query: { type: "string", description: "中文或英文检索关键词" },
+        layers: { type: "array", items: { type: "string", enum: VALID_LAYERS }, description: "可选：限定检索层级" },
+        limit: { type: "integer", description: "返回条数，默认 8" },
+        includeExpired: { type: "boolean", description: "是否包含已过期记忆，默认 false" }
+      }
+    }
+  },
+  {
+    name: "cg_read",
+    description: "按节点 ID 读取完整记忆详情、潮汐保留度、出入边关系与磁盘文件路径。",
+    inputSchema: {
+      type: "object",
+      required: ["id"],
+      properties: {
+        id: { type: "string", description: "记忆节点 ID" }
+      }
+    }
+  },
+  {
+    name: "cg_update",
+    description: "更新记忆节点内容、层级、标签或重要度（若节点受硬保护，降低重要度或解除保护需传 override: true）。",
+    inputSchema: {
+      type: "object",
+      required: ["id"],
+      properties: {
+        id: { type: "string", description: "记忆节点 ID" },
+        title: { type: "string" },
+        content: { type: "string" },
+        layer: { type: "string", enum: VALID_LAYERS },
+        importance: { type: "number" },
+        tags: { type: "array", items: { type: "string" } },
+        protected: { type: "boolean" },
+        override: { type: "boolean", description: "解除或降低硬保护时必须为 true" }
+      }
+    }
+  },
+  {
+    name: "cg_forget",
+    description: "显式遗忘/归档记忆节点（绝不静默物理删除，仅移入 vault/archive/；硬保护节点需传 override: true）。",
+    inputSchema: {
+      type: "object",
+      required: ["id"],
+      properties: {
+        id: { type: "string", description: "记忆节点 ID" },
+        reason: { type: "string", description: "归档原因" },
+        override: { type: "boolean", description: "对硬保护节点生效需为 true" }
+      }
+    }
+  },
+  {
+    name: "cg_link",
+    description: "在两个记忆节点之间建立有向语义关系（同时写入 SQLite 边表与源文件 frontmatter）。",
+    inputSchema: {
+      type: "object",
+      required: ["sourceId", "targetId"],
+      properties: {
+        sourceId: { type: "string", description: "源节点 ID" },
+        targetId: { type: "string", description: "目标节点 ID" },
+        relation: { type: "string", description: "关系类型，如 related_to、supports、derived_from、depends_on" },
+        weight: { type: "number", description: "边权重，默认 1.0" }
+      }
+    }
+  },
+  {
+    name: "cg_graph",
+    description: "获取记忆关系子图（以某节点为中心或按层级返回关联度最高的节点和边）。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        centerId: { type: "string", description: "可选中心节点 ID" },
+        layers: { type: "array", items: { type: "string", enum: VALID_LAYERS } },
+        limit: { type: "integer", description: "最大节点数，默认 50" }
+      }
+    }
+  },
+  {
+    name: "cg_goal",
+    description: "列出或创建/更新长期目标与待办（存储在 goals 层，默认硬保护）。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        op: { type: "string", enum: ["list", "upsert"], description: "操作：list（默认）或 upsert" },
+        id: { type: "string", description: "upsert 更新已有目标时传入" },
+        title: { type: "string", description: "目标标题" },
+        content: { type: "string", description: "目标详情" },
+        status: { type: "string", enum: ["active", "paused", "done"], description: "状态" },
+        priority: { type: "string", enum: ["high", "medium", "low"], description: "优先级" },
+        progress: { type: "number", description: "进度 0~100" }
+      }
+    }
+  },
+  {
+    name: "cg_reflect",
+    description: "记录元认知反思或待解决问题（写入 self 或 unresolved 层，并关联 derived_from 依据节点）。",
+    inputSchema: {
+      type: "object",
+      required: ["content"],
+      properties: {
+        title: { type: "string" },
+        content: { type: "string", description: "反思结论或待解决疑问" },
+        layer: { type: "string", enum: ["self", "unresolved"], description: "默认 self" },
+        basedOnIds: { type: "array", items: { type: "string" }, description: "关联依据节点 ID 列表" },
+        importance: { type: "number", description: "默认 0.75" },
+        tags: { type: "array", items: { type: "string" } }
+      }
+    }
+  },
+  {
+    name: "cg_maintain",
+    description: "潮汐维护：查看维护队列（queue），晋升情景（promote），强化访问（touch），手动或 AI 智能凝结（consolidate / ai_consolidate），补全向量（backfill_embeddings），或重建索引（rebuild）。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        op: {
+          type: "string",
+          enum: ["queue", "promote", "touch", "consolidate", "ai_consolidate", "backfill_embeddings", "rebuild"],
+          description: "默认 queue"
+        },
+        id: { type: "string", description: "promote/touch 时的目标节点 ID" },
+        targetLayer: { type: "string", enum: ["knowledge", "structural", "self", "anchor"], description: "promote/consolidate 目标层" },
+        sourceIds: { type: "array", items: { type: "string" }, description: "consolidate / ai_consolidate 的源节点 ID 列表" },
+        title: { type: "string", description: "consolidate 新节点标题" },
+        summary: { type: "string", description: "consolidate 提炼后的摘要正文" },
+        commit: { type: "boolean", description: "ai_consolidate 时是否直接写入落盘，默认 false 仅预览草稿" },
+        archiveSources: { type: "boolean", description: "凝结后是否归档非保护源节点" },
+        limit: { type: "integer", description: "backfill_embeddings 批量上限，默认 50" }
+      }
+    }
+  },
+  {
+    name: "cg_stats",
+    description: "获取蓝汐（Lanxi）认知图谱运行概览、潮汐水位分布、各层节点统计与配置（密钥已脱敏）。",
+    inputSchema: { type: "object", properties: {} }
+  },
+  {
+    name: "cg_import_vault",
+    description: "以严格只读方式从外部 Markdown 目录（兼容标准 Frontmatter、Obsidian Vault 与 DSH mdcg）导入历史笔记到蓝汐认知图谱。",
+    inputSchema: {
+      type: "object",
+      required: ["sourceDir"],
+      properties: {
+        sourceDir: { type: "string", description: "待导入目录的绝对路径" }
+      }
+    }
+  }
+];
+
+async function dispatchTool(name, args = {}) {
+  engine.config = engine.loadConfig();
+  switch (name) {
+    case "cg_write":
+      return engine.writeMemory(args);
+    case "cg_recall":
+      return await engine.recallHybrid({
+        query: args.query,
+        layers: args.layers,
+        limit: args.limit ?? 8,
+        includeExpired: Boolean(args.includeExpired),
+        touch: true,
+      });
+    case "cg_read": {
+      const node = engine.readMemory(args.id);
+      if (!node) throw new Error(`未找到记忆节点: ${args.id}`);
+      return node;
+    }
+    case "cg_update":
+      return engine.updateMemory(args.id, args);
+    case "cg_forget":
+      return engine.forgetMemory(args.id, { reason: args.reason || "", override: Boolean(args.override) });
+    case "cg_link":
+      return engine.linkMemories(args.sourceId, args.targetId, args.relation || "related_to", args.weight ?? 1.0);
+    case "cg_graph":
+      return engine.getGraph({ centerId: args.centerId, limit: args.limit ?? 50, layers: args.layers });
+    case "cg_goal":
+      if (args.op === "upsert" || args.title || args.content) {
+        return engine.upsertGoal(args);
+      }
+      return engine.listGoals();
+    case "cg_reflect":
+      return engine.reflect(args);
+    case "cg_maintain": {
+      const op = args.op || "queue";
+      if (op === "queue") return engine.getMaintenanceQueue();
+      if (op === "promote") return engine.promoteMemory(args.id, args.targetLayer || "knowledge");
+      if (op === "touch") return engine.touchMemory(args.id);
+      if (op === "consolidate") return engine.consolidateCluster(args);
+      if (op === "ai_consolidate") return await engine.aiConsolidateCluster(args);
+      if (op === "backfill_embeddings") return await engine.backfillEmbeddings(args.limit ?? 50);
+      if (op === "rebuild") return engine.rebuildIndex();
+      throw new Error(`未知维护操作: ${op}`);
+    }
+    case "cg_stats":
+      return engine.getOverview();
+    case "cg_import_vault":
+      return engine.importFromVault(args.sourceDir);
+    default:
+      throw new Error(`Unknown tool: ${name}`);
+  }
+}
+
+function send(obj) {
+  process.stdout.write(JSON.stringify(obj) + "\n");
+}
+
+function sendResponse(id, result) {
+  send({ jsonrpc: "2.0", id, result });
+}
+
+function sendError(id, code, message, data) {
+  send({ jsonrpc: "2.0", id, error: { code, message, ...(data !== undefined ? { data } : {}) } });
+}
+
+const rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
+
+rl.on("line", async (line) => {
+  const trimmed = line.trim();
+  if (!trimmed) return;
+  let req;
+  try {
+    req = JSON.parse(trimmed);
+  } catch {
+    return;
+  }
+  const { id, method, params } = req;
+  if (id === undefined || id === null) return;
+
+  try {
+    switch (method) {
+      case "initialize":
+        sendResponse(id, {
+          protocolVersion: params?.protocolVersion || "2024-11-05",
+          capabilities: { tools: {} },
+          serverInfo: { name: "lanxi-memory", version: "1.0.0" },
+        });
+        break;
+      case "ping":
+        sendResponse(id, {});
+        break;
+      case "tools/list":
+        sendResponse(id, { tools: TOOLS });
+        break;
+      case "tools/call": {
+        const toolName = params?.name;
+        const toolArgs = params?.arguments || {};
+        try {
+          const result = await dispatchTool(toolName, toolArgs);
+          sendResponse(id, {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+            isError: false,
+          });
+        } catch (err) {
+          sendResponse(id, {
+            content: [{ type: "text", text: `Error (${toolName}): ${err.message || String(err)}` }],
+            isError: true,
+          });
+        }
+        break;
+      }
+      default:
+        sendError(id, -32601, `Method not found: ${method}`);
+    }
+  } catch (err) {
+    sendError(id, -32603, "Internal error", String(err));
+  }
+});
+
+process.on("SIGINT", () => {
+  engine.close();
+  process.exit(0);
+});
+process.on("SIGTERM", () => {
+  engine.close();
+  process.exit(0);
+});

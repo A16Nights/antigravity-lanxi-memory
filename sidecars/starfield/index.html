@@ -1,0 +1,1447 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>蓝汐 · 潮汐星海</title>
+  <style>
+    :root {
+      --bg: #070d16;
+      --bg-glow: radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.14), transparent 58%);
+      --glass: rgba(12, 22, 36, 0.78);
+      --card: #0e1929;
+      --card-2: #142236;
+      --border: #1d314b;
+      --border-hi: #2b4a70;
+      --text: #e6f0fa;
+      --muted: #8aa2bd;
+      --cyan: #38bdf8;
+      --cyan-2: #22d3ee;
+      --indigo: #818cf8;
+      --amber: #fbbf24;
+      --rose: #fb7185;
+      --teal: #2dd4bf;
+      --ink-btn: #041d2e;
+      --canvas-bg: radial-gradient(circle at 50% 50%, #0d1d33 0%, #060b13 100%);
+    }
+    [data-theme="light"] {
+      --bg: #f1f6fb;
+      --bg-glow: radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.12), transparent 55%);
+      --glass: rgba(255, 255, 255, 0.85);
+      --card: #ffffff;
+      --card-2: #f4f8fc;
+      --border: #dbe6f2;
+      --border-hi: #b5cbe2;
+      --text: #0f2136;
+      --muted: #58708a;
+      --cyan: #0284c7;
+      --cyan-2: #0891b2;
+      --indigo: #4f46e5;
+      --amber: #d97706;
+      --rose: #e11d48;
+      --teal: #0d9488;
+      --ink-btn: #ffffff;
+      --canvas-bg: radial-gradient(circle at 50% 50%, #e7f2fc 0%, #d8e7f6 100%);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      background-image: var(--bg-glow);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    header.glass-bar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 10px 16px;
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .seg-nav {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+    .seg-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 5px 11px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .seg-btn:hover { color: var(--text); }
+    .seg-btn.active {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.16));
+      color: var(--cyan);
+      font-weight: 600;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+    .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .between { justify-content: space-between; }
+    .stack { display: flex; flex-direction: column; gap: 10px; }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 820px) {
+      .two-col { grid-template-columns: 1fr; }
+      header.glass-bar { padding: 10px 12px; }
+      main { padding: 12px; }
+    }
+    button, .btn {
+      background: var(--card-2);
+      color: var(--text);
+      border: 1px solid var(--border-hi);
+      border-radius: 8px;
+      padding: 6px 11px;
+      font-size: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      text-decoration: none;
+    }
+    button:hover { border-color: var(--cyan); }
+    button.primary {
+      background: linear-gradient(135deg, var(--cyan), var(--cyan-2));
+      border-color: var(--cyan);
+      color: var(--ink-btn);
+      font-weight: 600;
+    }
+    button.ai-btn {
+      background: linear-gradient(135deg, rgba(129, 140, 248, 0.25), rgba(56, 189, 248, 0.22));
+      border-color: var(--indigo);
+      color: var(--text);
+      font-weight: 600;
+    }
+    button.danger { color: var(--rose); border-color: rgba(251, 113, 133, 0.4); }
+    button.sm { padding: 4px 8px; font-size: 11.5px; }
+    input, select, textarea {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border-hi);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-family: inherit;
+      font-size: 12.5px;
+      width: 100%;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--cyan); }
+    textarea { min-height: 130px; resize: vertical; font-family: "Cascadia Code", Consolas, monospace; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .title-sm { font-size: 13.5px; font-weight: 600; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10.5px;
+      font-weight: 500;
+      border: 1px solid transparent;
+    }
+    .b-anchor { background: rgba(129, 140, 248, 0.16); color: var(--indigo); border-color: rgba(129, 140, 248, 0.35); }
+    .b-self { background: rgba(56, 189, 248, 0.16); color: var(--cyan); border-color: rgba(56, 189, 248, 0.35); }
+    .b-structural { background: rgba(45, 212, 191, 0.16); color: var(--teal); border-color: rgba(45, 212, 191, 0.35); }
+    .b-knowledge { background: rgba(34, 211, 238, 0.16); color: var(--cyan-2); border-color: rgba(34, 211, 238, 0.35); }
+    .b-episodic { background: rgba(138, 162, 189, 0.16); color: var(--muted); border-color: rgba(138, 162, 189, 0.3); }
+    .b-goals { background: rgba(251, 191, 36, 0.16); color: var(--amber); border-color: rgba(251, 191, 36, 0.35); }
+    .b-unresolved { background: rgba(251, 113, 133, 0.16); color: var(--rose); border-color: rgba(251, 113, 133, 0.35); }
+
+    /* Orbital Starfield */
+    .starfield-box {
+      position: relative;
+      height: 380px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--canvas-bg);
+      overflow: hidden;
+    }
+    canvas#star-canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+    canvas#star-canvas:active { cursor: grabbing; }
+    .star-overlay-tl {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      pointer-events: none;
+    }
+    .star-chip {
+      background: var(--glass);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .star-controls {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      display: flex;
+      gap: 4px;
+    }
+    .star-tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: var(--glass);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--cyan);
+      border-radius: 8px;
+      padding: 6px 9px;
+      font-size: 11.5px;
+      max-width: 240px;
+      z-index: 10;
+    }
+
+    /* Tide Horizon Bar */
+    .horizon-bar {
+      height: 10px;
+      width: 100%;
+      border-radius: 999px;
+      overflow: hidden;
+      display: flex;
+      background: var(--card-2);
+      border: 1px solid var(--border);
+    }
+    .horizon-seg { height: 100%; transition: width 0.35s ease; }
+    .tide-mini-track {
+      height: 4px;
+      width: 72px;
+      border-radius: 999px;
+      background: var(--border);
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .tide-mini-fill { height: 100%; background: linear-gradient(90deg, var(--indigo), var(--cyan)); }
+
+    .feed-item {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--card-2);
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .feed-item:hover { border-color: var(--cyan); }
+    .pill-filter {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .pill-filter.active {
+      background: rgba(56, 189, 248, 0.16);
+      color: var(--cyan);
+      border-color: var(--cyan);
+    }
+    .kv-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 10px;
+    }
+    .kv-row:last-child { border-bottom: none; }
+    .toggle-btn {
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      border: 1px solid var(--border-hi);
+      background: var(--bg);
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .toggle-btn.on {
+      background: rgba(56, 189, 248, 0.16);
+      color: var(--cyan);
+      border-color: var(--cyan);
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 14, 0.7);
+      display: grid;
+      place-items: center;
+      z-index: 60;
+      padding: 16px;
+    }
+    .modal {
+      width: min(640px, 100%);
+      max-height: 88vh;
+      overflow-y: auto;
+      background: var(--card);
+      border: 1px solid var(--border-hi);
+      border-radius: 14px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .hidden { display: none !important; }
+    .toast {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: var(--card-2);
+      border: 1px solid var(--cyan);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 9px;
+      font-size: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 80;
+    }
+    .toast.show { opacity: 1; }
+    code.path {
+      background: var(--bg);
+      padding: 3px 7px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: 11.5px;
+      color: var(--cyan);
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <header class="glass-bar">
+    <div class="brand">
+      <svg width="24" height="24" viewBox="0 0 256 256">
+        <circle cx="128" cy="128" r="110" fill="#072c44" stroke="#38bdf8" stroke-width="10"/>
+        <path d="M52 150 Q92 116 128 146 T204 136" fill="none" stroke="#38bdf8" stroke-width="16" stroke-linecap="round"/>
+        <circle cx="132" cy="76" r="16" fill="#e0f2fe"/>
+        <circle cx="92" cy="96" r="10" fill="#7dd3fc"/>
+        <circle cx="170" cy="100" r="10" fill="#a5b4fc"/>
+      </svg>
+      <span>蓝汐 · 潮汐星海</span>
+      <span id="ai-status-badge" class="badge b-self hidden">✨ 语义增强</span>
+    </div>
+
+    <div class="seg-nav">
+      <button class="seg-btn active" data-view="starfield" onclick="switchView('starfield')">✦ 潮汐星海</button>
+      <button class="seg-btn" data-view="stream" onclick="switchView('stream')">≋ 记忆流</button>
+      <button class="seg-btn" data-view="anchors" onclick="switchView('anchors')">◈ 锚点与目标</button>
+      <button class="seg-btn" data-view="maintain" onclick="switchView('maintain')">⚙ 潮汐维护 <span id="maint-badge" class="badge b-goals">0</span></button>
+    </div>
+
+    <div class="row">
+      <button id="theme-btn" class="sm" onclick="toggleTheme()">🌙 深海</button>
+      <button class="sm" onclick="copyWebUrl()" title="复制浏览器全屏访问地址">全屏地址</button>
+      <button class="primary sm" onclick="openWriteModal()">+ 刻录</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- VIEW 1: 潮汐星海 -->
+    <section id="view-starfield" class="stack">
+      <div class="card stack">
+        <div class="row between">
+          <div>
+            <div class="title-sm">同心轨道潮汐星图 · 潮起铭记，潮落留痕</div>
+            <div class="muted" id="star-stats-line">正在同步星海轨道...</div>
+          </div>
+          <div class="row">
+            <button class="sm" onclick="loadStarfield()">↻ 重排星图</button>
+          </div>
+        </div>
+
+        <div class="starfield-box">
+          <canvas id="star-canvas"></canvas>
+          <div class="star-overlay-tl">
+            <span class="star-chip">内核：定海锚点 (100%)</span>
+            <span class="star-chip">中环：涨潮强化</span>
+            <span class="star-chip">外带：退潮情景</span>
+          </div>
+          <div id="star-tooltip" class="star-tooltip hidden"></div>
+          <div class="star-controls">
+            <button class="sm" onclick="zoomStar(1.2)">＋</button>
+            <button class="sm" onclick="zoomStar(0.84)">－</button>
+            <button class="sm" onclick="resetStarCamera()">居中</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <input id="link-src" placeholder="源节点 ID（点击星点自动填入）" style="flex:1;" />
+          <input id="link-rel" value="related_to" placeholder="语义关系" style="width:140px;" />
+          <input id="link-dst" placeholder="目标节点 ID" style="flex:1;" />
+          <button class="primary sm" onclick="createLink()">建边连接</button>
+        </div>
+      </div>
+
+      <!-- Tide Horizon Bar -->
+      <div class="card stack">
+        <div class="row between">
+          <span class="title-sm">潮汐水位分布</span>
+          <span class="muted" id="horizon-summary">--</span>
+        </div>
+        <div class="horizon-bar" id="horizon-bar"></div>
+        <div class="row between muted" id="horizon-legend" style="font-size:11.5px;"></div>
+      </div>
+
+      <div class="two-col">
+        <div class="card stack">
+          <div class="row between">
+            <span class="title-sm">快速检索</span>
+            <span class="muted">支持中文分词 + 可选语义向量</span>
+          </div>
+          <div class="row">
+            <input id="quick-q" placeholder="搜记忆、决策、标签..." style="flex:1;" onkeydown="if(event.key==='Enter') runQuickSearch()" />
+            <button class="primary sm" onclick="runQuickSearch()">检索</button>
+          </div>
+          <div id="quick-results" class="stack"></div>
+        </div>
+
+        <div class="card stack">
+          <div class="row between">
+            <span class="title-sm">近期潮汐动态</span>
+            <button class="sm" onclick="switchView('stream')">全部记忆 ↗</button>
+          </div>
+          <div id="recent-feed" class="stack"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: 记忆流 -->
+    <section id="view-stream" class="stack hidden">
+      <div class="card stack">
+        <div class="row">
+          <input id="stream-q" placeholder="搜索认知图谱（启用 Embedding 时自动混合语义排序）..." style="flex:1;" onkeydown="if(event.key==='Enter') loadStream()" />
+          <select id="stream-sort" style="width:150px;" onchange="loadStream()">
+            <option value="recent">最新写入</option>
+            <option value="retention_asc">潮位最低（退潮优先）</option>
+            <option value="access">访问最多（涨潮优先）</option>
+            <option value="importance">重要度最高</option>
+          </select>
+          <button class="primary" onclick="loadStream()">检索</button>
+          <button onclick="document.getElementById('stream-q').value=''; loadStream()">重置</button>
+        </div>
+        <div class="row" id="layer-pills">
+          <button class="pill-filter active" data-layer="" onclick="setLayerFilter('')">全部</button>
+          <button class="pill-filter" data-layer="anchor" onclick="setLayerFilter('anchor')">anchor 锚点</button>
+          <button class="pill-filter" data-layer="self" onclick="setLayerFilter('self')">self 自我</button>
+          <button class="pill-filter" data-layer="structural" onclick="setLayerFilter('structural')">structural 架构</button>
+          <button class="pill-filter" data-layer="knowledge" onclick="setLayerFilter('knowledge')">knowledge 知识</button>
+          <button class="pill-filter" data-layer="episodic" onclick="setLayerFilter('episodic')">episodic 情景</button>
+          <button class="pill-filter" data-layer="goals" onclick="setLayerFilter('goals')">goals 目标</button>
+          <button class="pill-filter" data-layer="unresolved" onclick="setLayerFilter('unresolved')">unresolved 待决</button>
+          <button class="pill-filter" data-layer="archive" onclick="setLayerFilter('archive')">已归档</button>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <div class="row between">
+          <span class="title-sm">记忆流 <span class="muted" id="stream-count"></span></span>
+          <button class="sm primary" onclick="openWriteModal()">+ 刻录新记忆</button>
+        </div>
+        <div id="stream-list" class="stack"></div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: 锚点与目标 -->
+    <section id="view-anchors" class="stack hidden">
+      <div class="card stack">
+        <div class="row between">
+          <div>
+            <div class="title-sm">长期目标追踪（goals）</div>
+            <div class="muted">永久硬保护，随每次会话自动唤醒。</div>
+          </div>
+          <button class="primary sm" onclick="openGoalModal()">+ 新建目标</button>
+        </div>
+        <div id="goals-list" class="stack"></div>
+      </div>
+
+      <div class="card stack">
+        <div class="row between">
+          <div>
+            <div class="title-sm">定海锚点 · 自我反思 · 未决疑问</div>
+            <div class="muted">anchor 与 self 永不衰减（retention = 1.0）。</div>
+          </div>
+          <button class="sm primary" onclick="openWriteModal('self')">+ 记录自省</button>
+        </div>
+        <div id="anchors-list" class="stack"></div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: 潮汐维护与设置 -->
+    <section id="view-maintain" class="stack hidden">
+      <!-- 智能凝结台 -->
+      <div class="card stack">
+        <div class="row between">
+          <div>
+            <div class="title-sm">✨ 情景智能凝结台</div>
+            <div class="muted">勾选下方「待晋升」或「退潮老化」节点，提炼为高密度长期知识节点。</div>
+          </div>
+          <div class="row">
+            <span class="muted" id="selected-count-label">已选 0 项</span>
+            <button class="sm ai-btn" onclick="runAiConsolidatePreview()">✨ AI 智能凝结</button>
+            <button class="sm" onclick="openManualConsolidate()">手动合并凝结</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card stack">
+          <span class="title-sm">待晋升情景（高频 / 高价值 episodic）</span>
+          <div id="maint-promote" class="stack"></div>
+        </div>
+        <div class="card stack">
+          <span class="title-sm">退潮老化节点（低保留度，可强化或归档）</span>
+          <div id="maint-decay" class="stack"></div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card stack">
+          <span class="title-sm">运行开关与真源路径</span>
+          <div class="kv-row">
+            <span>自动召回（SessionStart / PreInvocation）</span>
+            <button id="tog-recall" class="toggle-btn" onclick="toggleFlag('autoRecall')">--</button>
+          </div>
+          <div class="kv-row">
+            <span>自动情景沉淀（Stop 钩子）</span>
+            <button id="tog-ingest" class="toggle-btn" onclick="toggleFlag('autoIngest')">--</button>
+          </div>
+          <div class="kv-row">
+            <span>每 10 轮长会话归档提醒</span>
+            <button id="tog-rem" class="toggle-btn" onclick="toggleReminder()">--</button>
+          </div>
+          <div class="kv-row">
+            <span>潮汐遗忘模型</span>
+            <select id="sel-decay" style="width:auto;" onchange="changeDecay(this.value)">
+              <option value="power_law">幂律衰减 (power_law)</option>
+              <option value="exponential">指数衰减 (exponential)</option>
+            </select>
+          </div>
+          <div class="muted" style="margin-top:4px;">Markdown 真源目录：</div>
+          <code class="path" id="vault-path">--</code>
+        </div>
+
+        <div class="card stack">
+          <span class="title-sm">外部知识库只读导入（Obsidian / Markdown / DSH）</span>
+          <div class="muted">严格只读扫描源目录，不修改或删除任何原文件，重复 ID 自动跳过。</div>
+          <input id="import-dir" placeholder="例如：D:\Notes\ObsidianVault 或 ~/.dsh/.dsh-memory/data/mdcg" />
+          <div class="row">
+            <button class="primary sm" onclick="importVault()">开始只读导入</button>
+            <button class="sm" onclick="rebuildIndex()">重建 FTS5 索引</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 可选 AI 增强配置 -->
+      <div class="card stack">
+        <div class="row between">
+          <div>
+            <div class="title-sm">可选 AI 增强接口（OpenAI 兼容格式 · 默认关闭）</div>
+            <div class="muted">不配置时本插件依然 100% 离线可用；配置后启用「AI 智能凝结」与「语义向量混合检索」。密钥仅存本地 config.json，页面永不回显明文。</div>
+          </div>
+          <div class="row">
+            <button class="sm" onclick="testAi()">测试连通</button>
+            <button class="sm ai-btn" onclick="backfillEmbeddings()">补齐向量索引</button>
+            <button class="sm primary" onclick="saveAiSettings()">保存 AI 设置</button>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="stack">
+            <div class="row between">
+              <strong>LLM 智能凝结接口</strong>
+              <button id="tog-llm" class="toggle-btn" onclick="toggleLocalAi('llmEnabled')">--</button>
+            </div>
+            <input id="ai-llm-url" placeholder="Base URL，如 https://api.openai.com/v1" />
+            <input id="ai-llm-model" placeholder="模型名称，如 gpt-4o-mini / deepseek-chat" />
+            <div class="row">
+              <input id="ai-llm-key" type="password" placeholder="API Key（留空保持不变）" style="flex:1;" />
+              <button class="sm danger" onclick="clearAiKey('llm')">清空</button>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="row between">
+              <strong>Embedding 语义检索接口</strong>
+              <button id="tog-emb" class="toggle-btn" onclick="toggleLocalAi('embeddingEnabled')">--</button>
+            </div>
+            <input id="ai-emb-url" placeholder="Base URL（留空可复用 LLM Base URL）" />
+            <input id="ai-emb-model" placeholder="模型名称，如 text-embedding-3-small / bge-m3" />
+            <div class="row">
+              <input id="ai-emb-key" type="password" placeholder="API Key（留空保持或复用 LLM Key）" style="flex:1;" />
+              <button class="sm danger" onclick="clearAiKey('embedding')">清空</button>
+            </div>
+          </div>
+        </div>
+        <div id="ai-test-result" class="muted"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Write Modal -->
+  <div id="write-modal" class="modal-backdrop hidden" onclick="if(event.target===this) closeWriteModal()">
+    <div class="modal">
+      <div class="row between">
+        <strong>刻录新记忆节点</strong>
+        <button class="sm" onclick="closeWriteModal()">关闭</button>
+      </div>
+      <div class="row">
+        <select id="w-layer" style="width:170px;">
+          <option value="knowledge">knowledge 知识</option>
+          <option value="structural">structural 架构</option>
+          <option value="episodic">episodic 情景</option>
+          <option value="self">self 自我认知</option>
+          <option value="anchor">anchor 永久锚点</option>
+          <option value="unresolved">unresolved 待解决</option>
+        </select>
+        <input id="w-imp" type="number" min="0" max="1" step="0.05" value="0.7" style="width:110px;" title=">=0.7 自动硬保护" />
+        <input id="w-tags" placeholder="标签（逗号分隔）" style="flex:1;" />
+      </div>
+      <input id="w-title" placeholder="标题（可选，默认提取正文首行）" />
+      <textarea id="w-body" placeholder="写入 Markdown 内容，支持 [[节点ID]] 双向链接..."></textarea>
+      <div class="row between">
+        <span class="muted">importance ≥ 0.7 或 anchor / self 自动开启硬保护</span>
+        <button class="primary" onclick="submitWrite()">写入并落盘</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div id="detail-modal" class="modal-backdrop hidden" onclick="if(event.target===this) closeDetailModal()">
+    <div class="modal">
+      <div class="row between">
+        <strong id="d-id">节点详情</strong>
+        <button class="sm" onclick="closeDetailModal()">关闭</button>
+      </div>
+      <div class="row" id="d-badges"></div>
+      <input id="d-title" placeholder="标题" />
+      <textarea id="d-body"></textarea>
+      <div class="row">
+        <span class="muted">重要度：</span>
+        <input id="d-imp" type="number" min="0" max="1" step="0.05" style="width:95px;" />
+        <select id="d-layer" style="width:160px;">
+          <option value="anchor">anchor</option>
+          <option value="self">self</option>
+          <option value="structural">structural</option>
+          <option value="knowledge">knowledge</option>
+          <option value="episodic">episodic</option>
+          <option value="goals">goals</option>
+          <option value="unresolved">unresolved</option>
+        </select>
+      </div>
+      <div id="d-edges" class="muted"></div>
+      <div class="row between">
+        <div class="row">
+          <button class="sm" onclick="touchDetail()">涨潮强化</button>
+          <button class="sm" onclick="promoteDetail()">晋升知识层</button>
+          <button class="sm danger" onclick="forgetDetail()">显式归档</button>
+        </div>
+        <button class="primary sm" onclick="saveDetail()">保存修改</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Consolidate Modal -->
+  <div id="consolidate-modal" class="modal-backdrop hidden" onclick="if(event.target===this) closeConsolidateModal()">
+    <div class="modal">
+      <div class="row between">
+        <strong id="c-modal-title">凝结知识节点</strong>
+        <button class="sm" onclick="closeConsolidateModal()">关闭</button>
+      </div>
+      <div class="row">
+        <select id="c-layer" style="width:160px;">
+          <option value="knowledge">knowledge 知识</option>
+          <option value="structural">structural 架构</option>
+        </select>
+        <input id="c-tags" placeholder="标签（逗号分隔）" style="flex:1;" />
+      </div>
+      <input id="c-title" placeholder="凝结后的知识标题" />
+      <textarea id="c-summary" placeholder="凝结摘要正文..."></textarea>
+      <div class="row between">
+        <label class="row muted" style="cursor:pointer;">
+          <input id="c-archive" type="checkbox" style="width:auto;" /> 凝结后归档非保护源节点
+        </label>
+        <button class="primary" onclick="commitConsolidation()">确认凝结并建边</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Goal Modal -->
+  <div id="goal-modal" class="modal-backdrop hidden" onclick="if(event.target===this) closeGoalModal()">
+    <div class="modal">
+      <div class="row between">
+        <strong>新建长期目标</strong>
+        <button class="sm" onclick="closeGoalModal()">关闭</button>
+      </div>
+      <input id="g-title" placeholder="目标标题" />
+      <div class="row">
+        <select id="g-pri" style="width:130px;">
+          <option value="high">高优先级</option>
+          <option value="medium" selected>中优先级</option>
+          <option value="low">低优先级</option>
+        </select>
+        <input id="g-prog" type="number" min="0" max="100" value="0" style="width:110px;" placeholder="进度%" />
+      </div>
+      <textarea id="g-body" placeholder="目标细节与验收标准..."></textarea>
+      <div class="row between">
+        <span class="muted">目标默认永久硬保护</span>
+        <button class="primary" onclick="submitGoal()">保存目标</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const TOKEN = params.get("token") || "";
+    let overview = null;
+    let currentView = "starfield";
+    let layerFilter = "";
+    let detailNode = null;
+    let selectedIds = new Set();
+    let localAiState = { llmEnabled: false, embeddingEnabled: false };
+
+    // Starfield camera & state
+    let starGraph = { nodes: [], edges: [] };
+    let starPoints = [];
+    let cam = { x: 0, y: 0, zoom: 1, dragging: false, lastX: 0, lastY: 0, moved: false };
+
+    function api(url, opts = {}) {
+      const headers = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
+      if (TOKEN) headers["X-Codeium-Sidecar-Token"] = TOKEN;
+      return fetch(url, Object.assign({}, opts, { headers })).then(async (r) => {
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || ("HTTP " + r.status));
+        return data;
+      });
+    }
+
+    function toast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(window._tt);
+      window._tt = setTimeout(() => el.classList.remove("show"), 2600);
+    }
+
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+    }
+
+    function fmtTime(sec) {
+      if (!sec) return "--";
+      const d = new Date(sec * 1000);
+      const p = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+
+    function applyTheme(t) {
+      const mode = t === "light" ? "light" : "dark";
+      if (mode === "light") document.documentElement.setAttribute("data-theme", "light");
+      else document.documentElement.removeAttribute("data-theme");
+      document.getElementById("theme-btn").textContent = mode === "light" ? "☀ 浅海" : "🌙 深海";
+      try { localStorage.setItem("lanxi_starfield_theme", mode); } catch {}
+      if (currentView === "starfield" && starPoints.length) drawStarfield();
+    }
+
+    function toggleTheme() {
+      const isLight = document.documentElement.getAttribute("data-theme") === "light";
+      applyTheme(isLight ? "dark" : "light");
+    }
+
+    function switchView(v) {
+      currentView = v;
+      document.querySelectorAll(".seg-btn").forEach((b) => b.classList.toggle("active", b.dataset.view === v));
+      ["starfield", "stream", "anchors", "maintain"].forEach((id) => {
+        document.getElementById("view-" + id).classList.toggle("hidden", id !== v);
+      });
+      if (v === "starfield") loadStarfield();
+      if (v === "stream") loadStream();
+      if (v === "anchors") loadAnchors();
+      if (v === "maintain") loadMaintain();
+    }
+
+    async function refreshAll() {
+      overview = await api("/api/overview");
+      const cfg = overview.config || {};
+      const ai = cfg.ai || {};
+      localAiState = { llmEnabled: Boolean(ai.llmEnabled), embeddingEnabled: Boolean(ai.embeddingEnabled) };
+
+      document.getElementById("maint-badge").textContent = overview.maintenanceCount;
+      document.getElementById("ai-status-badge").classList.toggle("hidden", !ai.embeddingEnabled);
+      document.getElementById("star-stats-line").textContent =
+        `活跃 ${overview.totalNodes} 节点 · 定海硬保护 ${overview.protectedCount} · 语义边 ${overview.edgesCount} · 已向量化 ${overview.embeddedCount}`;
+
+      renderHorizon(overview.tideBreakdown || {}, overview.totalNodes);
+      renderFeed(document.getElementById("recent-feed"), overview.recentMemories || []);
+
+      // Sync settings controls
+      setToggle("tog-recall", !!cfg.autoRecall);
+      setToggle("tog-ingest", !!cfg.autoIngest);
+      setToggle("tog-rem", (cfg.turnReminderInterval ?? 10) > 0, (cfg.turnReminderInterval ?? 10) > 0 ? `每 ${cfg.turnReminderInterval} 轮` : "关闭");
+      document.getElementById("sel-decay").value = cfg.decayModel || "power_law";
+      document.getElementById("vault-path").textContent = overview.vaultPath || "--";
+
+      setToggle("tog-llm", localAiState.llmEnabled);
+      setToggle("tog-emb", localAiState.embeddingEnabled);
+      document.getElementById("ai-llm-url").value = ai.llmBaseUrl || "https://api.openai.com/v1";
+      document.getElementById("ai-llm-model").value = ai.llmModel || "gpt-4o-mini";
+      document.getElementById("ai-llm-key").value = "";
+      document.getElementById("ai-llm-key").placeholder = ai.hasLlmKey ? `已保存密钥 (${ai.llmApiKey})，留空不变` : "填写 API Key（或设 LANXI_LLM_API_KEY）";
+
+      document.getElementById("ai-emb-url").value = ai.embeddingBaseUrl || "https://api.openai.com/v1";
+      document.getElementById("ai-emb-model").value = ai.embeddingModel || "text-embedding-3-small";
+      document.getElementById("ai-emb-key").value = "";
+      document.getElementById("ai-emb-key").placeholder = ai.hasEmbeddingKey ? `已保存密钥 (${ai.embeddingApiKey})，留空不变` : "填写 Key（留空自动复用 LLM Key）";
+
+      if (currentView === "starfield") await loadStarfield();
+      else switchView(currentView);
+    }
+
+    function renderHorizon(tb, total) {
+      const sum = Math.max(1, total || (tb.anchor + tb.rising + tb.fading + tb.unresolved));
+      const segs = [
+        { key: "定海锚点", val: tb.anchor || 0, color: "#818cf8" },
+        { key: "涨潮活跃", val: tb.rising || 0, color: "#38bdf8" },
+        { key: "退潮待凝结", val: tb.fading || 0, color: "#fbbf24" },
+        { key: "待解决", val: tb.unresolved || 0, color: "#fb7185" },
+      ];
+      document.getElementById("horizon-bar").innerHTML = segs
+        .map((s) => `<div class="horizon-seg" style="width:${(s.val / sum) * 100}%;background:${s.color};" title="${s.key}: ${s.val}"></div>`)
+        .join("");
+      document.getElementById("horizon-summary").textContent = `总计 ${total} 节点`;
+      document.getElementById("horizon-legend").innerHTML = segs
+        .map((s) => `<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.color};margin-right:4px;"></span>${s.key} ${s.val}</span>`)
+        .join("");
+    }
+
+    function renderFeed(container, items) {
+      container.innerHTML = "";
+      if (!items.length) {
+        container.innerHTML = '<div class="muted">暂无记忆节点。</div>';
+        return;
+      }
+      for (const m of items) {
+        const retPct = Math.round((m.retention ?? 1) * 100);
+        const div = document.createElement("div");
+        div.className = "feed-item";
+        div.onclick = () => openDetail(m.id);
+        div.innerHTML = `
+          <div class="row between" style="margin-bottom:4px;">
+            <div class="row">
+              <span class="badge b-${esc(m.layer)}">${esc(m.layer)}</span>
+              <strong>${esc(m.title)}</strong>
+              ${m.protected ? '<span class="badge b-anchor">⚓ 锚点</span>' : ''}
+            </div>
+            <div class="row muted" style="font-size:11px;">
+              <span class="tide-mini-track"><span class="tide-mini-fill" style="width:${retPct}%;display:block;"></span></span>
+              <span>${retPct}%</span>
+            </div>
+          </div>
+          <div class="muted">${esc(m.preview)}</div>
+          <div class="muted" style="margin-top:4px;font-size:11px;">${fmtTime(m.created_at)} · 重要度 ${Number(m.importance).toFixed(2)}${m.semanticScore ? ` · 语义 ${(m.semanticScore * 100).toFixed(0)}%` : ""}</div>
+        `;
+        container.appendChild(div);
+      }
+    }
+
+    // Orbital Starfield Canvas
+    async function loadStarfield() {
+      starGraph = await api("/api/graph?limit=80");
+      layoutStarfield();
+      drawStarfield();
+    }
+
+    function layoutStarfield() {
+      const canvas = document.getElementById("star-canvas");
+      const w = canvas.clientWidth || 640;
+      const h = canvas.clientHeight || 380;
+      canvas.width = w * devicePixelRatio;
+      canvas.height = h * devicePixelRatio;
+
+      const maxR = Math.min(w, h) * 0.42;
+      starPoints = (starGraph.nodes || []).map((n, idx) => {
+        const isCore = n.protected || n.layer === "anchor" || n.layer === "self" || n.layer === "goals";
+        const ret = Number(n.retention ?? 1);
+        let orbitR;
+        if (isCore) {
+          orbitR = maxR * (0.12 + 0.16 * ((idx * 37) % 100) / 100);
+        } else if (ret >= 0.7) {
+          orbitR = maxR * (0.36 + 0.25 * (1 - ret) / 0.3 + 0.08 * ((idx * 29) % 10) / 10);
+        } else {
+          orbitR = maxR * (0.68 + 0.28 * Math.min(1, (0.7 - ret) / 0.7));
+        }
+        const angle = idx * 2.3999632; // Golden angle spiral
+        return {
+          ...n,
+          wx: Math.cos(angle) * orbitR,
+          wy: Math.sin(angle) * orbitR,
+          rad: 4 + Number(n.importance || 0.5) * 4.5,
+        };
+      });
+    }
+
+    function drawStarfield() {
+      const canvas = document.getElementById("star-canvas");
+      const ctx = canvas.getContext("2d");
+      const dpr = devicePixelRatio || 1;
+      const w = canvas.width / dpr;
+      const h = canvas.height / dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+
+      const cx = w / 2 + cam.x;
+      const cy = h / 2 + cam.y;
+      const maxR = Math.min(w, h) * 0.42 * cam.zoom;
+
+      // Concentric tidal rings
+      const rings = [maxR * 0.29, maxR * 0.63, maxR * 0.96];
+      ctx.save();
+      ctx.setLineDash([4, 5]);
+      ctx.lineWidth = 1;
+      for (let i = 0; i < rings.length; i++) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, rings[i], 0, Math.PI * 2);
+        ctx.strokeStyle = i === 0 ? "rgba(129, 140, 248, 0.32)" : (i === 1 ? "rgba(56, 189, 248, 0.25)" : "rgba(251, 191, 36, 0.22)");
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      const posMap = new Map();
+      for (const p of starPoints) {
+        posMap.set(p.id, { sx: cx + p.wx * cam.zoom, sy: cy + p.wy * cam.zoom, p });
+      }
+
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.25)";
+      ctx.lineWidth = 1;
+      for (const e of starGraph.edges || []) {
+        const a = posMap.get(e.source_id);
+        const b = posMap.get(e.target_id);
+        if (!a || !b) continue;
+        ctx.beginPath();
+        ctx.moveTo(a.sx, a.sy);
+        ctx.lineTo(b.sx, b.sy);
+        ctx.stroke();
+      }
+
+      const colors = {
+        anchor: "#818cf8",
+        self: "#38bdf8",
+        structural: "#2dd4bf",
+        knowledge: "#22d3ee",
+        episodic: "#94a3b8",
+        goals: "#fbbf24",
+        unresolved: "#fb7185",
+      };
+
+      const isLight = document.documentElement.getAttribute("data-theme") === "light";
+      for (const { sx, sy, p } of posMap.values()) {
+        const r = p.rad * Math.max(0.75, Math.min(1.5, cam.zoom));
+        ctx.beginPath();
+        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.fillStyle = colors[p.layer] || "#38bdf8";
+        ctx.fill();
+        if (p.protected) {
+          ctx.strokeStyle = isLight ? "#0f2136" : "#e0f2fe";
+          ctx.lineWidth = 1.4;
+          ctx.stroke();
+        }
+        if (p.protected || cam.zoom > 1.25 || p.importance >= 0.7) {
+          ctx.fillStyle = isLight ? "rgba(15, 33, 54, 0.8)" : "rgba(230, 240, 250, 0.82)";
+          ctx.font = "10.5px sans-serif";
+          ctx.fillText(String(p.title || p.id).slice(0, 12), sx + r + 4, sy + 3);
+        }
+      }
+    }
+
+    function zoomStar(factor) {
+      cam.zoom = Math.max(0.45, Math.min(3.2, cam.zoom * factor));
+      drawStarfield();
+    }
+    function resetStarCamera() {
+      cam = { x: 0, y: 0, zoom: 1, dragging: false, lastX: 0, lastY: 0, moved: false };
+      drawStarfield();
+    }
+
+    const starCanvas = document.getElementById("star-canvas");
+    function hitTestStar(clientX, clientY) {
+      const rect = starCanvas.getBoundingClientRect();
+      const mx = clientX - rect.left;
+      const my = clientY - rect.top;
+      const cx = rect.width / 2 + cam.x;
+      const cy = rect.height / 2 + cam.y;
+      for (const p of starPoints) {
+        const sx = cx + p.wx * cam.zoom;
+        const sy = cy + p.wy * cam.zoom;
+        if (Math.hypot(sx - mx, sy - my) <= p.rad + 6) return { p, mx, my };
+      }
+      return null;
+    }
+
+    starCanvas.addEventListener("mousedown", (e) => {
+      cam.dragging = true;
+      cam.moved = false;
+      cam.lastX = e.clientX;
+      cam.lastY = e.clientY;
+    });
+    window.addEventListener("mouseup", () => { cam.dragging = false; });
+    starCanvas.addEventListener("mousemove", (e) => {
+      if (cam.dragging) {
+        const dx = e.clientX - cam.lastX;
+        const dy = e.clientY - cam.lastY;
+        if (Math.abs(dx) + Math.abs(dy) > 3) cam.moved = true;
+        cam.x += dx;
+        cam.y += dy;
+        cam.lastX = e.clientX;
+        cam.lastY = e.clientY;
+        drawStarfield();
+        return;
+      }
+      const hit = hitTestStar(e.clientX, e.clientY);
+      const tip = document.getElementById("star-tooltip");
+      if (hit) {
+        tip.innerHTML = `<strong>${esc(hit.p.title)}</strong><div class="muted">${esc(hit.p.layer)} · 保留 ${(hit.p.retention * 100).toFixed(0)}% · 重要度 ${hit.p.importance}</div>`;
+        tip.style.left = Math.min(starCanvas.clientWidth - 220, hit.mx + 12) + "px";
+        tip.style.top = Math.max(8, hit.my - 28) + "px";
+        tip.classList.remove("hidden");
+      } else {
+        tip.classList.add("hidden");
+      }
+    });
+    starCanvas.addEventListener("click", (e) => {
+      if (cam.moved) return;
+      const hit = hitTestStar(e.clientX, e.clientY);
+      if (hit) {
+        document.getElementById("link-src").value = hit.p.id;
+        openDetail(hit.p.id);
+      }
+    });
+
+    async function createLink() {
+      const sourceId = document.getElementById("link-src").value.trim();
+      const relation = document.getElementById("link-rel").value.trim() || "related_to";
+      const targetId = document.getElementById("link-dst").value.trim();
+      if (!sourceId || !targetId) return toast("请填写源节点和目标节点 ID");
+      await api("/api/link", { method: "POST", body: JSON.stringify({ sourceId, targetId, relation }) });
+      toast("已建立节点关系");
+      await loadStarfield();
+    }
+
+    async function runQuickSearch() {
+      const q = document.getElementById("quick-q").value.trim();
+      const data = await api(`/api/memories?q=${encodeURIComponent(q)}&hybrid=1&limit=6`);
+      renderFeed(document.getElementById("quick-results"), data.items || []);
+    }
+
+    function setLayerFilter(layer) {
+      layerFilter = layer;
+      document.querySelectorAll("#layer-pills .pill-filter").forEach((b) => b.classList.toggle("active", b.dataset.layer === layer));
+      loadStream();
+    }
+
+    async function loadStream() {
+      const q = document.getElementById("stream-q").value.trim();
+      const sort = document.getElementById("stream-sort").value;
+      const lifecycle = layerFilter === "archive" ? "archived" : "active";
+      const layer = layerFilter === "archive" ? "" : layerFilter;
+      const data = await api(`/api/memories?layer=${encodeURIComponent(layer)}&q=${encodeURIComponent(q)}&lifecycle=${lifecycle}&sort=${sort}&hybrid=1&limit=80`);
+      document.getElementById("stream-count").textContent = `(共 ${data.total} 条${data.hybridUsed ? " · 混合语义排序" : ""})`;
+      renderFeed(document.getElementById("stream-list"), data.items || []);
+    }
+
+    async function loadAnchors() {
+      const [goalsRes, anc, slf, unr] = await Promise.all([
+        api("/api/goals"),
+        api("/api/memories?layer=anchor&limit=40"),
+        api("/api/memories?layer=self&limit=40"),
+        api("/api/memories?layer=unresolved&limit=40"),
+      ]);
+      const gBox = document.getElementById("goals-list");
+      const goals = goalsRes.items || [];
+      gBox.innerHTML = goals.length ? "" : '<div class="muted">暂无长期目标，点右上角新建一个吧。</div>';
+      for (const g of goals) {
+        const st = g.extra?.status || "active";
+        const prog = g.extra?.progress ?? 0;
+        const row = document.createElement("div");
+        row.className = "feed-item";
+        row.innerHTML = `
+          <div class="row between">
+            <div class="row">
+              <span class="badge b-goals">${esc(g.extra?.priority || "medium")}</span>
+              <strong>${esc(g.title)}</strong>
+              <span class="badge b-knowledge">${esc(st)} · ${prog}%</span>
+            </div>
+            <div class="row">
+              <button class="sm" onclick="event.stopPropagation(); openDetail('${esc(g.id)}')">编辑</button>
+              ${st !== "done" ? `<button class="sm primary" onclick="event.stopPropagation(); markGoalDone('${esc(g.id)}')">完成</button>` : ""}
+            </div>
+          </div>
+          <div class="muted" style="margin-top:4px;">${esc(g.preview)}</div>
+        `;
+        gBox.appendChild(row);
+      }
+      renderFeed(document.getElementById("anchors-list"), [...(anc.items || []), ...(slf.items || []), ...(unr.items || [])]);
+    }
+
+    async function markGoalDone(id) {
+      await api("/api/goals", { method: "POST", body: JSON.stringify({ id, status: "done", progress: 100 }) });
+      toast("目标已标记完成");
+      await refreshAll();
+    }
+
+    // Maintenance & Settings
+    async function loadMaintain() {
+      const q = await api("/api/maintain");
+      renderMaint("maint-promote", q.toPromote || [], "promote");
+      renderMaint("maint-decay", q.decaying || [], "decay");
+      updateSelectedLabel();
+    }
+
+    function renderMaint(elId, items, kind) {
+      const box = document.getElementById(elId);
+      box.innerHTML = "";
+      if (!items.length) {
+        box.innerHTML = '<div class="muted">当前队列为空。</div>';
+        return;
+      }
+      for (const m of items) {
+        const div = document.createElement("div");
+        div.className = "feed-item";
+        const checked = selectedIds.has(m.id) ? "checked" : "";
+        let btns = `<button class="sm" onclick="event.stopPropagation(); openDetail('${esc(m.id)}')">查看</button>`;
+        if (kind === "promote") {
+          btns += `<button class="sm primary" onclick="event.stopPropagation(); quickPromote('${esc(m.id)}')">晋升</button>`;
+        } else {
+          btns += `<button class="sm" onclick="event.stopPropagation(); quickTouch('${esc(m.id)}')">强化</button>`;
+          btns += `<button class="sm danger" onclick="event.stopPropagation(); quickForget('${esc(m.id)}')">归档</button>`;
+        }
+        div.innerHTML = `
+          <div class="row between">
+            <label class="row" style="cursor:pointer;" onclick="event.stopPropagation()">
+              <input type="checkbox" ${checked} style="width:auto;" onchange="toggleSelect('${esc(m.id)}', this.checked)" />
+              <strong>${esc(m.title)}</strong>
+            </label>
+            <div class="row">${btns}</div>
+          </div>
+          <div class="muted" style="margin-top:4px;">重要度 ${Number(m.importance).toFixed(2)} · 保留 ${(Number(m.retention) * 100).toFixed(0)}% · 访问 ${m.access_count} 次</div>
+        `;
+        box.appendChild(div);
+      }
+    }
+
+    function toggleSelect(id, checked) {
+      if (checked) selectedIds.add(id);
+      else selectedIds.delete(id);
+      updateSelectedLabel();
+    }
+    function updateSelectedLabel() {
+      document.getElementById("selected-count-label").textContent = `已选 ${selectedIds.size} 项`;
+    }
+
+    async function runAiConsolidatePreview() {
+      const ids = [...selectedIds];
+      if (!ids.length) return toast("请先勾选要凝结的情景节点");
+      toast("正在调用 AI 智能凝结...");
+      try {
+        const res = await api("/api/ai/consolidate", { method: "POST", body: JSON.stringify({ sourceIds: ids, commit: false }) });
+        const p = res.preview;
+        document.getElementById("c-modal-title").textContent = "✨ AI 智能凝结预览";
+        document.getElementById("c-layer").value = p.targetLayer || "knowledge";
+        document.getElementById("c-tags").value = (p.tags || []).join(", ");
+        document.getElementById("c-title").value = p.title || "";
+        document.getElementById("c-summary").value = p.summary || "";
+        document.getElementById("consolidate-modal").classList.remove("hidden");
+      } catch (e) {
+        toast("AI 凝结失败：" + e.message);
+      }
+    }
+
+    function openManualConsolidate() {
+      if (!selectedIds.size) return toast("请先勾选要合并的节点");
+      document.getElementById("c-modal-title").textContent = "手动合并凝结";
+      document.getElementById("c-title").value = "";
+      document.getElementById("c-summary").value = "";
+      document.getElementById("consolidate-modal").classList.remove("hidden");
+    }
+    function closeConsolidateModal() { document.getElementById("consolidate-modal").classList.add("hidden"); }
+
+    async function commitConsolidation() {
+      const sourceIds = [...selectedIds];
+      const title = document.getElementById("c-title").value.trim();
+      const summary = document.getElementById("c-summary").value.trim();
+      const targetLayer = document.getElementById("c-layer").value;
+      const tags = document.getElementById("c-tags").value.split(/[,，]/).map((s) => s.trim()).filter(Boolean);
+      const archiveSources = document.getElementById("c-archive").checked;
+      if (!summary) return toast("凝结正文不能为空");
+      await api("/api/consolidate", { method: "POST", body: JSON.stringify({ sourceIds, title, summary, tags, targetLayer, archiveSources }) });
+      selectedIds.clear();
+      closeConsolidateModal();
+      toast("已完成知识凝结并建边");
+      await refreshAll();
+    }
+
+    async function quickPromote(id) {
+      await api("/api/promote", { method: "POST", body: JSON.stringify({ id, targetLayer: "knowledge" }) });
+      toast("已晋升为受保护长期知识");
+      await refreshAll();
+    }
+    async function quickTouch(id) {
+      await api("/api/touch", { method: "POST", body: JSON.stringify({ id }) });
+      toast("已强化该记忆");
+      await refreshAll();
+    }
+    async function quickForget(id) {
+      await api("/api/forget", { method: "POST", body: JSON.stringify({ id, reason: "manual_decay_archive" }) });
+      toast("已显式归档");
+      await refreshAll();
+    }
+
+    function setToggle(id, on, txt) {
+      const el = document.getElementById(id);
+      el.classList.toggle("on", on);
+      el.textContent = txt || (on ? "开启" : "关闭");
+    }
+    async function toggleFlag(key) {
+      const cur = Boolean(overview?.config?.[key]);
+      await api("/api/settings", { method: "POST", body: JSON.stringify({ [key]: !cur }) });
+      toast("运行配置已更新");
+      await refreshAll();
+    }
+    async function toggleReminder() {
+      const cur = Number(overview?.config?.turnReminderInterval ?? 10);
+      await api("/api/settings", { method: "POST", body: JSON.stringify({ turnReminderInterval: cur > 0 ? 0 : 10 }) });
+      toast("长会话提醒已更新");
+      await refreshAll();
+    }
+    async function changeDecay(val) {
+      await api("/api/settings", { method: "POST", body: JSON.stringify({ decayModel: val }) });
+      toast("已切换潮汐模型：" + val);
+      await refreshAll();
+    }
+
+    function toggleLocalAi(key) {
+      localAiState[key] = !localAiState[key];
+      setToggle(key === "llmEnabled" ? "tog-llm" : "tog-emb", localAiState[key]);
+    }
+    async function saveAiSettings() {
+      const payload = {
+        ai: {
+          llmEnabled: localAiState.llmEnabled,
+          llmBaseUrl: document.getElementById("ai-llm-url").value.trim(),
+          llmModel: document.getElementById("ai-llm-model").value.trim(),
+          llmApiKey: document.getElementById("ai-llm-key").value.trim(),
+          embeddingEnabled: localAiState.embeddingEnabled,
+          embeddingBaseUrl: document.getElementById("ai-emb-url").value.trim(),
+          embeddingModel: document.getElementById("ai-emb-model").value.trim(),
+          embeddingApiKey: document.getElementById("ai-emb-key").value.trim(),
+        },
+      };
+      await api("/api/settings", { method: "POST", body: JSON.stringify(payload) });
+      toast("AI 增强设置已保存");
+      await refreshAll();
+    }
+    async function clearAiKey(which) {
+      const flag = which === "llm" ? { clearLlmKey: true } : { clearEmbeddingKey: true };
+      await api("/api/settings", { method: "POST", body: JSON.stringify({ ai: flag }) });
+      toast("已清空对应 API Key");
+      await refreshAll();
+    }
+    async function testAi() {
+      const out = document.getElementById("ai-test-result");
+      out.textContent = "正在测试连通性...";
+      const res = await api("/api/ai/test", {
+        method: "POST",
+        body: JSON.stringify({
+          ai: {
+            llmBaseUrl: document.getElementById("ai-llm-url").value.trim(),
+            llmModel: document.getElementById("ai-llm-model").value.trim(),
+            llmApiKey: document.getElementById("ai-llm-key").value.trim(),
+            embeddingBaseUrl: document.getElementById("ai-emb-url").value.trim(),
+            embeddingModel: document.getElementById("ai-emb-model").value.trim(),
+            embeddingApiKey: document.getElementById("ai-emb-key").value.trim(),
+          },
+        }),
+      });
+      out.textContent = `LLM：${res.llm.ok ? "✔" : "✖"} ${res.llm.detail} (${res.llm.latencyMs}ms) ｜ Embedding：${res.embedding.ok ? "✔" : "✖"} ${res.embedding.detail} (${res.embedding.latencyMs}ms)`;
+    }
+    async function backfillEmbeddings() {
+      toast("正在为活跃记忆生成向量索引...");
+      try {
+        const res = await api("/api/ai/backfill-embeddings", { method: "POST", body: JSON.stringify({ limit: 50 }) });
+        toast(`本次生成 ${res.embedded} 条向量，剩余 ${res.remaining} 条待索引`);
+        await refreshAll();
+      } catch (e) {
+        toast("补齐向量失败：" + e.message);
+      }
+    }
+
+    async function importVault() {
+      const sourceDir = document.getElementById("import-dir").value.trim();
+      if (!sourceDir) return toast("请输入要只读导入的目录路径");
+      toast("正在只读导入 Markdown 笔记...");
+      const res = await api("/api/import-vault", { method: "POST", body: JSON.stringify({ sourceDir }) });
+      toast(`导入完成：新增 ${res.imported} 条，跳过 ${res.skipped} 条（耗时 ${res.elapsedMs}ms）`);
+      await refreshAll();
+    }
+    async function rebuildIndex() {
+      const res = await api("/api/rebuild", { method: "POST", body: "{}" });
+      toast(`FTS5 索引重建完成：共 ${res.indexed} 节点`);
+      await refreshAll();
+    }
+
+    function copyWebUrl() {
+      const url = overview?.webUrl || location.href;
+      navigator.clipboard?.writeText(url).then(() => toast("已复制全屏地址：" + url)).catch(() => toast(url));
+    }
+
+    // Write / Detail / Goal Modals
+    function openWriteModal(layer) {
+      if (layer) document.getElementById("w-layer").value = layer;
+      document.getElementById("write-modal").classList.remove("hidden");
+    }
+    function closeWriteModal() { document.getElementById("write-modal").classList.add("hidden"); }
+    async function submitWrite() {
+      const layer = document.getElementById("w-layer").value;
+      const importance = parseFloat(document.getElementById("w-imp").value || "0.7");
+      const tags = document.getElementById("w-tags").value.split(/[,，]/).map((s) => s.trim()).filter(Boolean);
+      const title = document.getElementById("w-title").value.trim();
+      const content = document.getElementById("w-body").value.trim();
+      if (!content) return toast("正文不能为空");
+      const res = await api("/api/write", { method: "POST", body: JSON.stringify({ layer, importance, tags, title, content }) });
+      toast(`已落盘：${res.id}${res.protected ? "（硬保护）" : ""}`);
+      document.getElementById("w-title").value = "";
+      document.getElementById("w-body").value = "";
+      closeWriteModal();
+      await refreshAll();
+    }
+
+    async function openDetail(id) {
+      detailNode = await api("/api/memory?id=" + encodeURIComponent(id));
+      document.getElementById("d-id").textContent = "节点：" + detailNode.id;
+      document.getElementById("d-badges").innerHTML = `
+        <span class="badge b-${esc(detailNode.layer)}">${esc(detailNode.layer)}</span>
+        ${detailNode.protected ? '<span class="badge b-anchor">⚓ 硬保护</span>' : ''}
+        <span class="muted">保留 ${(detailNode.retention * 100).toFixed(1)}% · 访问 ${detailNode.access_count} 次</span>
+      `;
+      document.getElementById("d-title").value = detailNode.title || "";
+      document.getElementById("d-body").value = detailNode.body || "";
+      document.getElementById("d-imp").value = detailNode.importance ?? 0.5;
+      document.getElementById("d-layer").value = detailNode.layer || "knowledge";
+      const outStr = (detailNode.outgoing || []).map((e) => `→ ${e.relation} → ${e.target_id}`).join("；");
+      const inStr = (detailNode.incoming || []).map((e) => `← ${e.relation} ← ${e.source_id}`).join("；");
+      document.getElementById("d-edges").textContent = [outStr, inStr].filter(Boolean).join(" | ") || "暂无图谱连边";
+      document.getElementById("detail-modal").classList.remove("hidden");
+    }
+    function closeDetailModal() { document.getElementById("detail-modal").classList.add("hidden"); }
+
+    async function saveDetail() {
+      if (!detailNode) return;
+      const title = document.getElementById("d-title").value.trim();
+      const content = document.getElementById("d-body").value.trim();
+      const importance = parseFloat(document.getElementById("d-imp").value || "0.5");
+      const layer = document.getElementById("d-layer").value;
+      let override = false;
+      if (detailNode.protected && importance < (overview?.config?.autoProtectImportance ?? 0.7)) {
+        if (!confirm("该节点受硬保护，确认降级并解除保护吗？")) return;
+        override = true;
+      }
+      await api("/api/update", { method: "POST", body: JSON.stringify({ id: detailNode.id, title, content, importance, layer, override }) });
+      toast("已保存更新");
+      closeDetailModal();
+      await refreshAll();
+    }
+    async function touchDetail() {
+      if (!detailNode) return;
+      await api("/api/touch", { method: "POST", body: JSON.stringify({ id: detailNode.id }) });
+      toast("已完成涨潮强化");
+      await openDetail(detailNode.id);
+    }
+    async function promoteDetail() {
+      if (!detailNode) return;
+      await api("/api/promote", { method: "POST", body: JSON.stringify({ id: detailNode.id, targetLayer: "knowledge" }) });
+      toast("已晋升至 knowledge 并硬保护");
+      await openDetail(detailNode.id);
+      await refreshAll();
+    }
+    async function forgetDetail() {
+      if (!detailNode) return;
+      let override = false;
+      if (detailNode.protected) {
+        if (!confirm("该节点受硬保护，确认显式归档到 archive 目录吗？")) return;
+        override = true;
+      }
+      await api("/api/forget", { method: "POST", body: JSON.stringify({ id: detailNode.id, reason: "starfield_archive", override }) });
+      toast("已归档");
+      closeDetailModal();
+      await refreshAll();
+    }
+
+    function openGoalModal() { document.getElementById("goal-modal").classList.remove("hidden"); }
+    function closeGoalModal() { document.getElementById("goal-modal").classList.add("hidden"); }
+    async function submitGoal() {
+      const title = document.getElementById("g-title").value.trim();
+      const priority = document.getElementById("g-pri").value;
+      const progress = parseFloat(document.getElementById("g-prog").value || "0");
+      const content = document.getElementById("g-body").value.trim();
+      if (!title) return toast("请输入目标标题");
+      await api("/api/goals", { method: "POST", body: JSON.stringify({ title, priority, progress, content: content || title }) });
+      toast("长期目标已保存");
+      document.getElementById("g-title").value = "";
+      document.getElementById("g-body").value = "";
+      closeGoalModal();
+      await refreshAll();
+    }
+
+    try { applyTheme(localStorage.getItem("lanxi_starfield_theme") || "dark"); } catch {}
+    refreshAll().catch((e) => toast("初始化失败：" + e.message));
+  </script>
+</body>
+</html>
