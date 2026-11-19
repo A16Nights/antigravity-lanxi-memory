@@ -261,7 +261,7 @@ test("MCP stdio server, lifecycle hooks, and Starfield Sidecar HTTP server", asy
     const maintResult = JSON.parse(msgs[4].result.content[0].text);
     assert.deepEqual(maintResult.unknownIds, ["non-existent-id"]);
 
-    // 2. Lifecycle hooks
+    // 2. Lifecycle hooks (default: SessionStart ON, PreInvocation autoRecall OFF)
     const cid = "test-conv-1";
     const ss = spawnSync("node", [path.join(ROOT_DIR, "hooks", "session-start.mjs")], {
       input: JSON.stringify({ conversationId: cid }),
@@ -272,6 +272,19 @@ test("MCP stdio server, lifecycle hooks, and Starfield Sidecar HTTP server", asy
     assert.equal(ss.status, 0);
     assert.ok(ss.stdout.includes("蓝汐 · 认知图谱已就绪"));
 
+    const preDefaultOff = spawnSync("node", [path.join(ROOT_DIR, "hooks", "pre-invocation.mjs")], {
+      input: JSON.stringify({ conversationId: cid, lastUserInput: "帮我确认端到端测试规范" }),
+      encoding: "utf8",
+      cwd: ROOT_DIR,
+      env,
+    });
+    assert.equal(preDefaultOff.stdout.trim(), "{}");
+
+    // Enable autoRecall to verify strict threshold recall & noise blocking
+    const cfgEng = new LanxiEngine(tmpData);
+    cfgEng.updateSettings({ autoRecall: true, recallStrictness: "strict" });
+    cfgEng.close();
+
     const preCasual = spawnSync("node", [path.join(ROOT_DIR, "hooks", "pre-invocation.mjs")], {
       input: JSON.stringify({ conversationId: cid, lastUserInput: "那就蓝汐吧" }),
       encoding: "utf8",
@@ -281,7 +294,7 @@ test("MCP stdio server, lifecycle hooks, and Starfield Sidecar HTTP server", asy
     assert.equal(preCasual.stdout.trim(), "{}");
 
     const preReal = spawnSync("node", [path.join(ROOT_DIR, "hooks", "pre-invocation.mjs")], {
-      input: JSON.stringify({ conversationId: cid, lastUserInput: "帮我确认端到端测试规范" }),
+      input: JSON.stringify({ conversationId: cid, lastUserInput: "现在帮我确认端到端测试规范" }),
       encoding: "utf8",
       cwd: ROOT_DIR,
       env,
@@ -290,7 +303,7 @@ test("MCP stdio server, lifecycle hooks, and Starfield Sidecar HTTP server", asy
 
     // Unmatched conversational sentence must NOT dump unrelated fallback nodes
     const preNoMatch = spawnSync("node", [path.join(ROOT_DIR, "hooks", "pre-invocation.mjs")], {
-      input: JSON.stringify({ conversationId: cid, lastUserInput: "你跟进你认为需要的，不需要的就不跟进" }),
+      input: JSON.stringify({ conversationId: cid, lastUserInput: "主要是我发现额度用的有点快，你现在也稍微调查一下有哪些可能的原因导致的" }),
       encoding: "utf8",
       cwd: ROOT_DIR,
       env,
@@ -331,6 +344,8 @@ test("MCP stdio server, lifecycle hooks, and Starfield Sidecar HTTP server", asy
       const html = await (await fetch("http://127.0.0.1:18911/")).text();
       assert.ok(html.includes("蓝汐 · 潮汐星海"));
       assert.ok(html.includes("sel-write-gate"));
+      assert.ok(html.includes("tog-session-start"));
+      assert.ok(html.includes("sel-strictness"));
       const impRes = await (
         await fetch("http://127.0.0.1:18911/api/maintain/importance", {
           method: "POST",

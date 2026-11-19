@@ -2,7 +2,7 @@
   "$schema": "https://antigravity.google/schemas/v1/plugin.json",
   "name": "lanxi-memory",
   "displayName": "蓝汐 · 潮汐认知图谱",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Zero-dependency local cognitive graph memory plugin for Antigravity: 5-layer Markdown vault, CJK FTS5 search, tidal forgetting curves, optional AI semantic recall/consolidation, and Tidal Starfield UI.",
   "logo": "assets/logo.svg",
   "suggestedPrompts": [

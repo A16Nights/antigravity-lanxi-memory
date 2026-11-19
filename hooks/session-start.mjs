@@ -10,7 +10,7 @@ function main() {
   const engine = new LanxiEngine();
   try {
     const cfg = engine.loadConfig();
-    if (!cfg.autoRecall) return {};
+    if (cfg.autoSessionStart === false) return {};
 
     const overview = engine.getOverview();
     const identityRows = engine.recall({

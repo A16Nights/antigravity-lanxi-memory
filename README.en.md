@@ -17,7 +17,7 @@
   - `episodic` (default landing layer): unlayered writes default to `episodic` instead of polluting `knowledge`; decays smoothly along the tidal curve and can be promoted, consolidated, or batch-confirmed via maintenance.
   - `unresolved`: open questions and pending investigations.
 - **Disk-as-Truth Staleness Detection (`dataStale`)**: Detects out-of-band edits or new `.md` files in `vault/` and surfaces a sync banner in the UI & `cg_stats`.
-- **Project-Aware Recall & Noise-Filtered Hooks**: Auto-tags workspace `project` context for boosted per-project recall; `PreInvocation` strips conversational fillers and avoids irrelevant fallback dumps.
+- **Project-Aware Recall & Token-Saving Hooks**: Auto-tags workspace `project` context for boosted per-project recall; `SessionStart` (startup anchors, on by default) and `PreInvocation` (per-turn auto-recall, off by default in favor of on-demand `cg_recall`) have independent UI toggles plus a 3-tier term-coverage threshold (`strict` / `balanced` / `loose`) to prevent noisy false positives and context bloat.
 - **Original "Tidal Starfield" Sidecar UI**:
   - Concentric orbital starfield canvas (drag, zoom, hover tooltips, click-to-inspect & link), Tidal Horizon distribution bar, hybrid memory stream, anchors/goals manager, and maintenance workbench (available both in the Antigravity side pane and full-screen in any browser).
 - **Optional AI Enhancement (Off by Default)**:

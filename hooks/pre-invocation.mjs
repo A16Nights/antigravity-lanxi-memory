@@ -43,11 +43,13 @@ function main(input) {
     const project = extractProjectName(input);
 
     if (cfg.autoRecall && userText.length >= 8 && cleanedQuery.length >= 3) {
+      const strictness = cfg.recallStrictness || "strict";
       const hits = engine.recall({
         query: cleanedQuery,
         layers: ["structural", "knowledge", "episodic", "goals", "unresolved"],
         project,
         allowFallback: false,
+        strictness,
         limit: cfg.recallWindow || 6,
         touch: false,
       });
@@ -58,6 +60,7 @@ function main(input) {
           layers: ["anchor", "self"],
           project,
           allowFallback: false,
+          strictness,
           limit: 2,
           touch: false,
         })

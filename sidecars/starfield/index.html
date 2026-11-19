@@ -551,8 +551,20 @@
         <div class="card stack">
           <span class="title-sm">运行开关与真源路径</span>
           <div class="kv-row">
-            <span>自动召回（SessionStart / PreInvocation）</span>
+            <span>开场锚点唤醒（SessionStart 钩子）</span>
+            <button id="tog-session-start" class="toggle-btn" onclick="toggleFlag('autoSessionStart')">--</button>
+          </div>
+          <div class="kv-row">
+            <span>每轮自动硬塞召回（PreInvocation 钩子）</span>
             <button id="tog-recall" class="toggle-btn" onclick="toggleFlag('autoRecall')">--</button>
+          </div>
+          <div class="kv-row">
+            <span>自动召回匹配门槛</span>
+            <select id="sel-strictness" style="width:auto;" onchange="changeStrictness(this.value)">
+              <option value="strict">严格防噪 (strict · 多词共现)</option>
+              <option value="balanced">均衡匹配 (balanced)</option>
+              <option value="loose">宽松召回 (loose)</option>
+            </select>
           </div>
           <div class="kv-row">
             <span>自动情景沉淀（Stop 钩子）</span>
@@ -837,7 +849,9 @@
       renderFeed(document.getElementById("recent-feed"), overview.recentMemories || []);
 
       // Sync settings controls
+      setToggle("tog-session-start", cfg.autoSessionStart !== false);
       setToggle("tog-recall", !!cfg.autoRecall);
+      document.getElementById("sel-strictness").value = cfg.recallStrictness || "strict";
       setToggle("tog-ingest", !!cfg.autoIngest);
       setToggle("tog-rem", (cfg.turnReminderInterval ?? 10) > 0, (cfg.turnReminderInterval ?? 10) > 0 ? `每 ${cfg.turnReminderInterval} 轮` : "关闭");
       document.getElementById("sel-decay").value = cfg.decayModel || "power_law";
@@ -1293,6 +1307,11 @@
     async function changeWriteGate(val) {
       await api("/api/settings", { method: "POST", body: JSON.stringify({ writeGate: val }) });
       toast("已切换防误锁闸门：" + val);
+      await refreshAll();
+    }
+    async function changeStrictness(val) {
+      await api("/api/settings", { method: "POST", body: JSON.stringify({ recallStrictness: val }) });
+      toast("已切换自动召回匹配门槛：" + val);
       await refreshAll();
     }
 
