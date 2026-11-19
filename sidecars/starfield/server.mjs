@@ -88,6 +88,7 @@ const server = http.createServer(async (req, res) => {
       if (req.method === "GET" && pathname === "/api/memories") {
         const layer = url.searchParams.get("layer") || null;
         const query = url.searchParams.get("q") || "";
+        const project = url.searchParams.get("project") || null;
         const lifecycle = url.searchParams.get("lifecycle") || "active";
         const sort = url.searchParams.get("sort") || "recent";
         const hybrid = url.searchParams.get("hybrid") === "1";
@@ -96,11 +97,11 @@ const server = http.createServer(async (req, res) => {
 
         if (hybrid && query.trim() && lifecycle === "active") {
           const layers = layer && layer !== "archive" ? [layer] : null;
-          const items = await engine.recallHybrid({ query: query.trim(), layers, limit, touch: false });
+          const items = await engine.recallHybrid({ query: query.trim(), layers, project, limit, touch: false });
           sendJson(res, 200, { total: items.length, items, hybridUsed: true });
           return;
         }
-        sendJson(res, 200, engine.listMemories({ layer, query, lifecycle, sort, limit, offset }));
+        sendJson(res, 200, engine.listMemories({ layer, query, project, lifecycle, sort, limit, offset }));
         return;
       }
 
@@ -117,7 +118,11 @@ const server = http.createServer(async (req, res) => {
 
       if (req.method === "POST" && pathname === "/api/write") {
         const body = await readBody(req);
-        sendJson(res, 200, engine.writeMemory(body));
+        sendJson(res, 200, engine.writeMemory({
+          ...body,
+          importanceSource: body.importanceSource || "confirmed",
+          confirmedBy: body.confirmedBy || "ui",
+        }));
         return;
       }
 
@@ -167,6 +172,12 @@ const server = http.createServer(async (req, res) => {
 
       if (req.method === "GET" && pathname === "/api/maintain") {
         sendJson(res, 200, engine.getMaintenanceQueue());
+        return;
+      }
+
+      if (req.method === "POST" && pathname === "/api/maintain/importance") {
+        const body = await readBody(req);
+        sendJson(res, 200, engine.setImportanceBatch(body));
         return;
       }
 

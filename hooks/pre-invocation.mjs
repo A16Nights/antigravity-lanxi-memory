@@ -1,3 +1,4 @@
+import path from "node:path";
 import { LanxiEngine } from "../lib/engine.mjs";
 
 async function readStdin() {
@@ -6,7 +7,7 @@ async function readStdin() {
   return Buffer.concat(chunks).toString("utf8").trim();
 }
 
-const FILLER_RE = /(?:那就|这个|那个|我们|你们|一下吧|一下|什么|可以|怎么|没有|还是|或者|已经|现在|觉得|因为|所以|如果|然后|就是|不是|有没有|帮我|给我|看看|好呀|好的|谢谢)/g;
+const FILLER_RE = /(?:不需要的|不需要|有没有|那就|这个|那个|我们|你们|他们|它们|咱们|这里|那里|一下吧|一下|什么|可以|怎么|没有|还是|或者|已经|现在|刚才|觉得|认为|需要|跟进|但是|不过|其实|好像|大概|可能|应该|随便|都行|因为|所以|如果|然后|就是|不是|帮我|给我|看看|好呀|好的|谢谢)/g;
 const EDGE_PARTICLE_RE = /[吗呢吧呀啊哦嘛，。！？、,.!?\s]+/g;
 
 function extractRecallQuery(text) {
@@ -15,6 +16,14 @@ function extractRecallQuery(text) {
     .replace(EDGE_PARTICLE_RE, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function extractProjectName(input) {
+  const raw = (Array.isArray(input?.workspacePaths) && input.workspacePaths[0]) || input?.cwd || "";
+  const trimmed = String(raw || "").trim().replace(/[\\/]+$/, "");
+  if (!trimmed || /^[A-Za-z]:$/.test(trimmed)) return "";
+  const base = path.basename(trimmed);
+  return base.length >= 2 ? base : "";
 }
 
 function main(input) {
@@ -31,17 +40,27 @@ function main(input) {
 
     const parts = [];
     const cleanedQuery = extractRecallQuery(userText);
+    const project = extractProjectName(input);
 
     if (cfg.autoRecall && userText.length >= 8 && cleanedQuery.length >= 3) {
       const hits = engine.recall({
         query: cleanedQuery,
         layers: ["structural", "knowledge", "episodic", "goals", "unresolved"],
+        project,
+        allowFallback: false,
         limit: cfg.recallWindow || 6,
         touch: false,
       });
 
       const idHits = engine
-        .recall({ query: cleanedQuery, layers: ["anchor", "self"], limit: 2, touch: false })
+        .recall({
+          query: cleanedQuery,
+          layers: ["anchor", "self"],
+          project,
+          allowFallback: false,
+          limit: 2,
+          touch: false,
+        })
         .filter((h) => {
           const qLower = cleanedQuery.toLowerCase();
           return (

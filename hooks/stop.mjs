@@ -1,5 +1,14 @@
 import fs from "node:fs";
+import path from "node:path";
 import { LanxiEngine } from "../lib/engine.mjs";
+
+function extractProjectName(input) {
+  const raw = (Array.isArray(input?.workspacePaths) && input.workspacePaths[0]) || input?.cwd || "";
+  const trimmed = String(raw || "").trim().replace(/[\\/]+$/, "");
+  if (!trimmed || /^[A-Za-z]:$/.test(trimmed)) return "";
+  const base = path.basename(trimmed);
+  return base.length >= 2 ? base : "";
+}
 
 async function readStdin() {
   const chunks = [];
@@ -71,6 +80,7 @@ function main(input) {
       content: body,
       importance: 0.45,
       confidence: 0.65,
+      project: extractProjectName(input) || undefined,
       session_id: convId,
       role: "user",
       source: "auto-ingest",

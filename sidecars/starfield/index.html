@@ -384,6 +384,11 @@
   </header>
 
   <main>
+    <div id="stale-banner" class="card row between hidden" style="border-color: var(--amber); background: rgba(251, 191, 36, 0.08); margin-bottom: 12px;">
+      <div id="stale-banner-text" style="font-size: 12.5px; color: var(--amber);">⚠ 检测到本地 Markdown 记忆文件与索引不同步，建议同步索引。</div>
+      <button class="sm primary" onclick="rebuildIndex()">立即同步索引</button>
+    </div>
+
     <!-- VIEW 1: 潮汐星海 -->
     <section id="view-starfield" class="stack">
       <div class="card stack">
@@ -562,6 +567,14 @@
             <select id="sel-decay" style="width:auto;" onchange="changeDecay(this.value)">
               <option value="power_law">幂律衰减 (power_law)</option>
               <option value="exponential">指数衰减 (exponential)</option>
+            </select>
+          </div>
+          <div class="kv-row">
+            <span>写入防误锁闸门</span>
+            <select id="sel-write-gate" style="width:auto;" onchange="changeWriteGate(this.value)">
+              <option value="off">宽松兼容 (off)</option>
+              <option value="confirm_protect">自评暂不硬锁 (confirm_protect)</option>
+              <option value="strict">关键层需确认 (strict)</option>
             </select>
           </div>
           <div class="muted" style="margin-top:4px;">Markdown 真源目录：</div>
@@ -828,7 +841,18 @@
       setToggle("tog-ingest", !!cfg.autoIngest);
       setToggle("tog-rem", (cfg.turnReminderInterval ?? 10) > 0, (cfg.turnReminderInterval ?? 10) > 0 ? `每 ${cfg.turnReminderInterval} 轮` : "关闭");
       document.getElementById("sel-decay").value = cfg.decayModel || "power_law";
+      document.getElementById("sel-write-gate").value = cfg.writeGate || "off";
       document.getElementById("vault-path").textContent = overview.vaultPath || "--";
+
+      const staleBanner = document.getElementById("stale-banner");
+      if (overview.dataStale) {
+        const fr = overview.freshness || {};
+        document.getElementById("stale-banner-text").textContent =
+          `⚠ 检测到本地 Markdown 真源变动（文件 ${fr.diskFileCount ?? "?"} / 索引 ${fr.dbNodeCount ?? "?"}，变更 ${fr.staleFilesCount ?? 0} 个），建议立即同步索引。`;
+        staleBanner.classList.remove("hidden");
+      } else {
+        staleBanner.classList.add("hidden");
+      }
 
       setToggle("tog-llm", localAiState.llmEnabled);
       setToggle("tog-emb", localAiState.embeddingEnabled);
@@ -1264,6 +1288,11 @@
     async function changeDecay(val) {
       await api("/api/settings", { method: "POST", body: JSON.stringify({ decayModel: val }) });
       toast("已切换潮汐模型：" + val);
+      await refreshAll();
+    }
+    async function changeWriteGate(val) {
+      await api("/api/settings", { method: "POST", body: JSON.stringify({ writeGate: val }) });
+      toast("已切换防误锁闸门：" + val);
       await refreshAll();
     }
 

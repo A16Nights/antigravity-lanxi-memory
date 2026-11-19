@@ -129,7 +129,7 @@ test("LanxiEngine core lifecycle, decay math, CJK recall, and protection guard",
 
     engine.close();
   } finally {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 6, retryDelay: 100 });
   }
 });
 
@@ -239,6 +239,12 @@ test("MCP stdio server, lifecycle hooks, and Starfield Sidecar HTTP server", asy
         method: "tools/call",
         params: { name: "cg_recall", arguments: { query: "端到端测试" } },
       }),
+      JSON.stringify({
+        jsonrpc: "2.0",
+        id: 5,
+        method: "tools/call",
+        params: { name: "cg_maintain", arguments: { op: "set_importance", ids: ["non-existent-id"], importance: 0.8, confirm: true } },
+      }),
     ].join("\n") + "\n";
 
     const mcpOut = spawnSync("node", [path.join(ROOT_DIR, "mcp-server.mjs")], {
@@ -252,6 +258,8 @@ test("MCP stdio server, lifecycle hooks, and Starfield Sidecar HTTP server", asy
     assert.equal(msgs[1].result.tools.length, 12);
     const recallResult = JSON.parse(msgs[3].result.content[0].text);
     assert.ok(recallResult.length >= 1);
+    const maintResult = JSON.parse(msgs[4].result.content[0].text);
+    assert.deepEqual(maintResult.unknownIds, ["non-existent-id"]);
 
     // 2. Lifecycle hooks
     const cid = "test-conv-1";
@@ -280,10 +288,20 @@ test("MCP stdio server, lifecycle hooks, and Starfield Sidecar HTTP server", asy
     });
     assert.ok(preReal.stdout.includes("蓝汐自动召回"));
 
+    // Unmatched conversational sentence must NOT dump unrelated fallback nodes
+    const preNoMatch = spawnSync("node", [path.join(ROOT_DIR, "hooks", "pre-invocation.mjs")], {
+      input: JSON.stringify({ conversationId: cid, lastUserInput: "你跟进你认为需要的，不需要的就不跟进" }),
+      encoding: "utf8",
+      cwd: ROOT_DIR,
+      env,
+    });
+    assert.equal(preNoMatch.stdout.trim(), "{}");
+
     const stopRes = spawnSync("node", [path.join(ROOT_DIR, "hooks", "stop.mjs")], {
       input: JSON.stringify({
         conversationId: cid,
         terminationReason: "NO_TOOL_CALL",
+        workspacePaths: ["D:\\Workspace\\lanxi-demo"],
         lastUserInput: "请记住我们的密钥 Bearer abcdefghijklmnop 不要泄露",
       }),
       encoding: "utf8",
@@ -292,10 +310,10 @@ test("MCP stdio server, lifecycle hooks, and Starfield Sidecar HTTP server", asy
     });
     assert.equal(JSON.parse(stopRes.stdout).decision, "allow");
 
-    // Verify redaction happened on episodic entry
+    // Verify redaction and workspace project tagging happened on episodic entry
     const eng = new LanxiEngine(tmpData);
-    const ep = eng.listMemories({ layer: "episodic", limit: 5 });
-    assert.ok(ep.items.some((x) => x.preview.includes("[REDACTED_TOKEN]")));
+    const ep = eng.listMemories({ layer: "episodic", project: "lanxi-demo", limit: 5 });
+    assert.ok(ep.items.some((x) => x.preview.includes("[REDACTED_TOKEN]") && x.project === "lanxi-demo"));
     eng.close();
 
     // 3. Sidecar HTTP Server
@@ -309,8 +327,19 @@ test("MCP stdio server, lifecycle hooks, and Starfield Sidecar HTTP server", asy
       assert.equal(h.ok, true);
       const ov = await (await fetch("http://127.0.0.1:18911/api/overview")).json();
       assert.ok(ov.totalNodes >= 2);
+      assert.equal(ov.dataStale, false);
       const html = await (await fetch("http://127.0.0.1:18911/")).text();
       assert.ok(html.includes("蓝汐 · 潮汐星海"));
+      assert.ok(html.includes("sel-write-gate"));
+      const impRes = await (
+        await fetch("http://127.0.0.1:18911/api/maintain/importance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: [ep.items[0].id], importance: 0.75, confirm: true, confirmedBy: "ui-test" }),
+        })
+      ).json();
+      assert.equal(impRes.updated.length, 1);
+      assert.equal(impRes.updated[0].protected, true);
     } finally {
       const exited = new Promise((r) => srvProc.once("exit", r));
       srvProc.kill();
@@ -318,5 +347,114 @@ test("MCP stdio server, lifecycle hooks, and Starfield Sidecar HTTP server", asy
     }
   } finally {
     fs.rmSync(tmpData, { recursive: true, force: true, maxRetries: 6, retryDelay: 100 });
+  }
+});
+
+test("0.11 upgrades: default episodic layer, dataStale detection, writeGate & setImportanceBatch, layer guard, project boost", () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "lanxi-v11-"));
+  let engine = null;
+  try {
+    engine = new LanxiEngine(tmpDir);
+
+    // 1. Default layer is episodic
+    const defNode = engine.writeMemory({
+      title: "随手记录草稿",
+      content: "这是一条未声明层级的草稿记录。",
+      importance: 0.4,
+    });
+    assert.equal(defNode.layer, "episodic");
+
+    // 2. Hint importance does not self-lock protection, even >= 0.7
+    engine.updateSettings({ writeGate: "confirm_protect" });
+    const hintNode = engine.writeMemory({
+      layer: "knowledge",
+      title: "AI 自评高分知识",
+      content: "未经过确认的高重要度记录不应自动硬锁定。",
+      importance: 0.85,
+      importanceSource: "hint",
+    });
+    assert.equal(hintNode.protected, false);
+    assert.equal(hintNode.protectionPendingConfirm, true);
+    const hintRead = engine.readMemory(hintNode.id);
+    assert.ok(computeRetention(hintRead, engine.config, Date.now() / 1000 + 20 * 86400) < 1.0);
+
+    // Batch confirm via setImportanceBatch promotes protection cleanly
+    const batchRes = engine.setImportanceBatch({
+      ids: [hintNode.id, "missing_id_xyz"],
+      importance: 0.9,
+      confirm: true,
+      confirmedBy: "human",
+    });
+    assert.equal(batchRes.updated.length, 1);
+    assert.equal(batchRes.updated[0].protected, true);
+    assert.equal(batchRes.updated[0].verification_state, "verified");
+    assert.deepEqual(batchRes.unknownIds, ["missing_id_xyz"]);
+
+    // Downgrading protected node without override gets recorded in skipped
+    const skipRes = engine.setImportanceBatch({ ids: [hintNode.id], importance: 0.2, override: false });
+    assert.equal(skipRes.skipped.length, 1);
+
+    // 3. Strict gate blocks unconfirmed anchor/self/structural writes
+    engine.updateSettings({ writeGate: "strict" });
+    assert.throws(
+      () => engine.writeMemory({ layer: "structural", content: "未确认的架构规则" }),
+      /strict 写入闸门/
+    );
+    const strictOk = engine.writeMemory({
+      layer: "structural",
+      content: "已确认的核心架构规则",
+      importance: 0.75,
+      confirmedBy: "user",
+    });
+    assert.equal(strictOk.protected, true);
+
+    // 4. Protected layer cannot be downgraded without override
+    const selfNode = engine.writeMemory({
+      layer: "self",
+      title: "自我原则",
+      content: "绝不篡改历史测试断言。",
+      confirmedBy: "user",
+    });
+    assert.throws(() => engine.updateMemory(selfNode.id, { layer: "episodic" }), /受保护层/);
+
+    // 5. Project attribution & priority boost
+    const pAlpha = engine.writeMemory({
+      layer: "knowledge",
+      project: "alpha-app",
+      title: "Alpha 部署端口约定",
+      content: "部署端口统一使用配置中心下发端口。",
+      confirmedBy: "user",
+    });
+    const pBeta = engine.writeMemory({
+      layer: "knowledge",
+      project: "beta-app",
+      title: "Beta 部署端口约定",
+      content: "部署端口统一使用配置中心下发端口（Beta）。",
+      confirmedBy: "user",
+    });
+    const alphaHits = engine.recall({ query: "部署端口", project: "alpha-app", limit: 5, touch: false });
+    assert.equal(alphaHits[0].id, pAlpha.id);
+    assert.equal(alphaHits[0].projectMatch, true);
+    const strictBeta = engine.recall({ query: "部署端口", project: "beta-app", strictProject: true, limit: 5, touch: false });
+    assert.equal(strictBeta.length, 1);
+    assert.equal(strictBeta[0].id, pBeta.id);
+
+    // 6. Disk freshness / dataStale detection + rebuild preserves extra metadata
+    assert.equal(engine.getOverview().dataStale, false);
+    const future = new Date(Date.now() + 6000);
+    fs.utimesSync(hintRead.file_path, future, future);
+    const staleOv = engine.getOverview();
+    assert.equal(staleOv.dataStale, true);
+    assert.ok(staleOv.freshness.staleFilesCount >= 1);
+    assert.equal(engine.readMemory(hintNode.id).diskSync.stale, true);
+
+    engine.rebuildIndex();
+    assert.equal(engine.checkDiskFreshness({ force: true }).dataStale, false);
+    const afterRebuild = engine.readMemory(pAlpha.id);
+    assert.equal(afterRebuild.project, "alpha-app");
+    assert.equal(afterRebuild.extra.importance_confirmed_by, "user");
+  } finally {
+    try { engine?.close(); } catch {}
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 6, retryDelay: 100 });
   }
 });

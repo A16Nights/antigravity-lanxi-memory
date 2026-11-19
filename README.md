@@ -11,16 +11,13 @@
 ## ✨ 核心特性
 
 - **零外部依赖 · 开箱即用**：仅依赖 Node.js（`>= 22.0.0`）内置的 `node:sqlite`（WAL + FTS5）与原生 `fetch`，无需安装 Python、Docker 或外置向量库。
-- **五层认知结构 + 硬保护机制**：
-  - `anchor`（永久锚点）、`self`（自我认知）、`goals`（长期目标）：定海锚点，永久保留（`retention = 1.0`）。
-  - `structural`（架构规律）、`knowledge`（通用知识）：`importance >= 0.7` 自动开启硬保护，归档或降级需显式确认 `override: true`。
-  - `episodic`（情景事件）：遵循潮汐遗忘曲线自然衰减，召回或强化后自动提升保留度。
+- **五层认知结构 + 防误锁硬保护机制**：
+  - `anchor`（永久锚点）、`self`（自我认知）、`goals`（长期目标）：定海锚点，永久保留（`retention = 1.0`），防意外降层。
+  - `structural`（架构规律）、`knowledge`（通用知识）：`importance >= 0.7` 可开启硬保护，归档或降级需显式确认 `override: true`；支持可选 `writeGate`（防 AI 自评重要度未确认前擅自锁死）。
+  - `episodic`（情景事件，**默认落层**）：未指定层级时默认进入情景层，避免草稿污染长期知识库；遵循潮汐遗忘曲线衰减，召回或强化后自动涨潮，并在维护台支持晋升与批量确认重要度。
   - `unresolved`（待解决问题）：持续追踪未决疑点。
-- **中英混合高精度检索**：自研 CJK 2-gram + ASCII 分词器写入 SQLite FTS5，毫秒级精准召回中文长句。
-- **智能生命周期钩子（防噪音 & 防泄露）**：
-  - `SessionStart`：注入身份锚点与活跃目标。
-  - `PreInvocation`：过滤常见口语填充词，避免短闲聊误召回无关历史，并支持每 10 轮长会话归档提醒。
-  - `Stop`：自动脱敏常见凭据与私钥后沉淀情景摘要，从不阻塞对话结束。
+- **磁盘即真源检测（`dataStale`）**：自动感知外部编辑器对 `vault/*.md` 的修改与文件增减，在概览与潮汐星海顶栏提示一键重建索引。
+- **项目优先召回 & 降噪钩子**：按当前工作区自动标记与加权 `project` 记忆；`PreInvocation` 过滤口语填充词并在无匹配时静默跳过，避免无关旧记录刷屏。
 - **原创「潮汐星海」工作台（Sidecar + 浏览器全屏双形态）**：
   - 同心轨道潮汐星图 Canvas（支持拖拽、缩放、悬停查看与点击建边）、潮汐水位分布条、记忆流、锚点目标页与维护台。
 - **可选 AI 增强（默认关闭，完全自愿）**：
@@ -49,17 +46,17 @@
 
 | 工具名 | 作用 |
 | --- | --- |
-| `cg_write` | 写入记忆节点（自动去重与 `>= 0.7` 硬保护） |
-| `cg_recall` | 潮汐加权召回（启用 Embedding 时自动执行 FTS5 + 语义混合排序） |
-| `cg_read` | 按节点 ID 读取全文、保留度、出入边与磁盘路径 |
-| `cg_update` | 更新节点内容、层级或重要度（带硬保护拦截） |
+| `cg_write` | 写入记忆节点（默认落 `episodic`，支持 `project`、`importanceSource`、`rejection_reason`） |
+| `cg_recall` | 潮汐加权 + 项目优先召回（启用 Embedding 时自动执行 FTS5 + 语义混合排序） |
+| `cg_read` | 按节点 ID 读取全文、保留度、出入边与磁盘同步状态 |
+| `cg_update` | 更新节点内容、层级、别名或重要度（带硬保护与防降层拦截） |
 | `cg_forget` | 显式归档到 `vault/archive/`（绝不静默删文件） |
 | `cg_link` | 在节点之间建立有向语义边（同步写入 frontmatter） |
 | `cg_graph` | 获取全局或局部子图数据 |
 | `cg_goal` | 列出或创建/更新长期目标（`goals` 层） |
 | `cg_reflect` | 记录元认知反思或未决问题（`self` / `unresolved`） |
-| `cg_maintain` | 维护队列、晋升、强化、手动/AI 凝结、向量补全、索引重建 |
-| `cg_stats` | 获取运行概览、潮汐水位分布与脱敏配置 |
+| `cg_maintain` | 维护队列、晋升、强化、批量重要度确认（`set_importance`）、手动/AI 凝结、向量补全、索引重建 |
+| `cg_stats` | 获取运行概览、潮汐水位分布、`dataStale` 新鲜度检测与脱敏配置 |
 | `cg_import_vault` | 严格只读导入外部 Markdown / Obsidian Vault / DSH mdcg |
 
 ---

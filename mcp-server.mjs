@@ -7,7 +7,7 @@ const engine = new LanxiEngine();
 const TOOLS = [
   {
     name: "cg_write",
-    description: "写入长期记忆节点到 Markdown 认知图（自动校验与去重；importance >= 0.7 或 anchor/self 层自动开启硬保护）。",
+    description: "写入长期记忆节点到 Markdown 认知图（默认落 episodic 情景层；重要长期结论请显式指定 knowledge/structural；importance >= 0.7 或 anchor/self 层可开启硬保护）。",
     inputSchema: {
       type: "object",
       required: ["content"],
@@ -17,9 +17,13 @@ const TOOLS = [
         layer: {
           type: "string",
           enum: VALID_LAYERS,
-          description: "分层：anchor（永久锚点）、self（自我认知）、structural（架构/规律）、knowledge（通用知识，默认）、episodic（情景事件）、goals（目标）、unresolved（待解决问题）"
+          description: "分层：anchor（永久锚点）、self（自我认知）、structural（架构/规律）、knowledge（通用知识）、episodic（情景事件，默认）、goals（目标）、unresolved（待解决问题）"
         },
-        importance: { type: "number", description: "重要度 0~1，默认 0.5；>= 0.7 自动开启硬保护" },
+        importance: { type: "number", description: "重要度 0~1，默认 0.5；>= 0.7 可开启硬保护" },
+        importanceSource: { type: "string", enum: ["hint", "confirmed"], description: "重要度来源：'hint'（AI 自评，未确认不自动硬锁）或 'confirmed'（已确认）" },
+        confirmedBy: { type: "string", description: "确认人（如 'user'），传入后自动视为 confirmed" },
+        project: { type: "string", description: "所属项目或工作区名（自动追加 项目:<name> 标签并提升同项目召回权重）" },
+        rejection_reason: { type: "string", description: "可选：被否决/弃用方案的原因说明" },
         tags: { type: "array", items: { type: "string" }, description: "标签数组" },
         aliases: { type: "array", items: { type: "string" }, description: "别名数组" },
         valid_until: { type: "number", description: "可选过期 Unix 秒时间戳" },
@@ -29,13 +33,15 @@ const TOOLS = [
   },
   {
     name: "cg_recall",
-    description: "按关键词、分层与潮汐加权检索记忆（若已配置 Embedding API 则自动执行 FTS5 + 向量语义混合召回），并强化命中节点。",
+    description: "按关键词、分层、项目与潮汐加权检索记忆（若已配置 Embedding API 则自动执行 FTS5 + 向量语义混合召回），并强化命中节点。",
     inputSchema: {
       type: "object",
       required: ["query"],
       properties: {
         query: { type: "string", description: "中文或英文检索关键词" },
         layers: { type: "array", items: { type: "string", enum: VALID_LAYERS }, description: "可选：限定检索层级" },
+        project: { type: "string", description: "可选：项目名称，优先加权匹配该项目记忆（不漏出跨项目记忆）" },
+        strictProject: { type: "boolean", description: "为 true 时严格只返回匹配 project 的记忆，默认 false" },
         limit: { type: "integer", description: "返回条数，默认 8" },
         includeExpired: { type: "boolean", description: "是否包含已过期记忆，默认 false" }
       }
@@ -54,7 +60,7 @@ const TOOLS = [
   },
   {
     name: "cg_update",
-    description: "更新记忆节点内容、层级、标签或重要度（若节点受硬保护，降低重要度或解除保护需传 override: true）。",
+    description: "更新记忆节点内容、层级、标签、别名或重要度（若节点受硬保护，降低重要度、从受保护层迁出或解除保护需传 override: true）。",
     inputSchema: {
       type: "object",
       required: ["id"],
@@ -64,9 +70,14 @@ const TOOLS = [
         content: { type: "string" },
         layer: { type: "string", enum: VALID_LAYERS },
         importance: { type: "number" },
+        importanceSource: { type: "string", enum: ["hint", "confirmed"] },
+        confirmedBy: { type: "string" },
+        project: { type: "string" },
+        rejection_reason: { type: "string" },
         tags: { type: "array", items: { type: "string" } },
+        aliases: { type: "array", items: { type: "string" } },
         protected: { type: "boolean" },
-        override: { type: "boolean", description: "解除或降低硬保护时必须为 true" }
+        override: { type: "boolean", description: "解除/降低硬保护或降级受保护层时必须为 true" }
       }
     }
   },
@@ -143,16 +154,21 @@ const TOOLS = [
   },
   {
     name: "cg_maintain",
-    description: "潮汐维护：查看维护队列（queue），晋升情景（promote），强化访问（touch），手动或 AI 智能凝结（consolidate / ai_consolidate），补全向量（backfill_embeddings），或重建索引（rebuild）。",
+    description: "潮汐维护：查看维护队列（queue），晋升情景（promote），强化访问（touch），批量修改/确认重要度（set_importance），手动或 AI 智能凝结（consolidate / ai_consolidate），补全向量（backfill_embeddings），或重建索引（rebuild）。",
     inputSchema: {
       type: "object",
       properties: {
         op: {
           type: "string",
-          enum: ["queue", "promote", "touch", "consolidate", "ai_consolidate", "backfill_embeddings", "rebuild"],
+          enum: ["queue", "promote", "touch", "set_importance", "consolidate", "ai_consolidate", "backfill_embeddings", "rebuild"],
           description: "默认 queue"
         },
-        id: { type: "string", description: "promote/touch 时的目标节点 ID" },
+        id: { type: "string", description: "promote/touch/set_importance 时的目标节点 ID" },
+        ids: { type: "array", items: { type: "string" }, description: "set_importance 批量目标节点 ID 列表" },
+        importance: { type: "number", description: "set_importance 要设置的重要度 0~1" },
+        confirm: { type: "boolean", description: "set_importance 时是否同时确认保护（将 hint 转为 confirmed）" },
+        confirmedBy: { type: "string", description: "确认来源标识，默认 'user'" },
+        override: { type: "boolean", description: "set_importance 降低受保护节点重要度时传 true" },
         targetLayer: { type: "string", enum: ["knowledge", "structural", "self", "anchor"], description: "promote/consolidate 目标层" },
         sourceIds: { type: "array", items: { type: "string" }, description: "consolidate / ai_consolidate 的源节点 ID 列表" },
         title: { type: "string", description: "consolidate 新节点标题" },
@@ -165,7 +181,7 @@ const TOOLS = [
   },
   {
     name: "cg_stats",
-    description: "获取蓝汐（Lanxi）认知图谱运行概览、潮汐水位分布、各层节点统计与配置（密钥已脱敏）。",
+    description: "获取蓝汐（Lanxi）认知图谱运行概览、潮汐水位分布、各层节点统计、磁盘真源新鲜度检测（dataStale）与配置（密钥已脱敏）。",
     inputSchema: { type: "object", properties: {} }
   },
   {
@@ -190,6 +206,8 @@ async function dispatchTool(name, args = {}) {
       return await engine.recallHybrid({
         query: args.query,
         layers: args.layers,
+        project: args.project,
+        strictProject: Boolean(args.strictProject),
         limit: args.limit ?? 8,
         includeExpired: Boolean(args.includeExpired),
         touch: true,
@@ -219,6 +237,7 @@ async function dispatchTool(name, args = {}) {
       if (op === "queue") return engine.getMaintenanceQueue();
       if (op === "promote") return engine.promoteMemory(args.id, args.targetLayer || "knowledge");
       if (op === "touch") return engine.touchMemory(args.id);
+      if (op === "set_importance") return engine.setImportanceBatch(args);
       if (op === "consolidate") return engine.consolidateCluster(args);
       if (op === "ai_consolidate") return await engine.aiConsolidateCluster(args);
       if (op === "backfill_embeddings") return await engine.backfillEmbeddings(args.limit ?? 50);
@@ -247,8 +266,9 @@ function sendError(id, code, message, data) {
 }
 
 const rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
+let requestQueue = Promise.resolve();
 
-rl.on("line", async (line) => {
+async function handleLine(line) {
   const trimmed = line.trim();
   if (!trimmed) return;
   let req;
@@ -266,7 +286,7 @@ rl.on("line", async (line) => {
         sendResponse(id, {
           protocolVersion: params?.protocolVersion || "2024-11-05",
           capabilities: { tools: {} },
-          serverInfo: { name: "lanxi-memory", version: "1.0.0" },
+          serverInfo: { name: "lanxi-memory", version: "1.1.0" },
         });
         break;
       case "ping":
@@ -298,6 +318,10 @@ rl.on("line", async (line) => {
   } catch (err) {
     sendError(id, -32603, "Internal error", String(err));
   }
+}
+
+rl.on("line", (line) => {
+  requestQueue = requestQueue.then(() => handleLine(line)).catch(() => {});
 });
 
 process.on("SIGINT", () => {
