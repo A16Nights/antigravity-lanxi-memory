@@ -1,5 +1,7 @@
 # 蓝汐 · 潮汐认知图谱（Lanxi Memory）
 
+**简体中文** | [English](README.en.md)
+
 > **Local-first, zero-dependency cognitive graph memory plugin for Antigravity — 5-layer Markdown vault + CJK FTS5 + Tidal forgetting curves + Optional AI semantic enhancement + Tidal Starfield UI.**
 
 **蓝汐（Lanxi）** 是一款专为 **Google Antigravity** 打造的纯本地长期记忆与认知图谱插件。它把「人类可读的纯 Markdown 真源文档」与「幂律/指数潮汐遗忘曲线」融合在一起：重要约定永久锚定不衰减，日常情景随时间退潮、被频繁检索则涨潮强化，绝不静默丢弃任何记忆文件。
