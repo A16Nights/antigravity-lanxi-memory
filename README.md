@@ -32,10 +32,10 @@
 1. 克隆仓库到 Antigravity 全局插件目录：
    ```bash
    # macOS / Linux
-   git clone https://github.com/A16Nights/lanxi-memory.git ~/.gemini/config/plugins/lanxi-memory
+   git clone https://github.com/A16Nights/antigravity-lanxi-memory.git ~/.gemini/config/plugins/lanxi-memory
 
    # Windows PowerShell
-   git clone https://github.com/A16Nights/lanxi-memory.git "$env:USERPROFILE\.gemini\config\plugins\lanxi-memory"
+   git clone https://github.com/A16Nights/antigravity-lanxi-memory.git "$env:USERPROFILE\.gemini\config\plugins\lanxi-memory"
    ```
 2. **重启 Antigravity**（彻底退出托盘后重新打开）。
 3. 在客户端 **Customizations** 页面确认 `蓝汐 · 潮汐认知图谱` 已启用，或在对话中直接点击 `[蓝汐 · 潮汐星海](sidecar://lanxi-memory/starfield/)` 打开工作台。

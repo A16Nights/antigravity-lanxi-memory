@@ -1,14 +1,14 @@
 {
-  "name": "lanxi-memory",
+  "name": "antigravity-lanxi-memory",
   "version": "1.1.1",
   "description": "Local-first cognitive graph memory plugin for Antigravity with Markdown vault, SQLite FTS5, tidal forgetting curves, optional AI enhancement, and Tidal Starfield UI.",
   "type": "module",
   "license": "MIT",
   "author": "A16Nights",
-  "homepage": "https://github.com/A16Nights/lanxi-memory#readme",
+  "homepage": "https://github.com/A16Nights/antigravity-lanxi-memory#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/A16Nights/lanxi-memory.git"
+    "url": "https://github.com/A16Nights/antigravity-lanxi-memory.git"
   },
   "engines": {
     "node": ">=22.0.0"

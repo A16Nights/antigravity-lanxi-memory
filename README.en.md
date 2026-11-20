@@ -32,14 +32,14 @@
 ### Option A: Git Clone (Recommended)
 ```bash
 # macOS / Linux
-git clone https://github.com/A16Nights/lanxi-memory.git ~/.gemini/config/plugins/lanxi-memory
+git clone https://github.com/A16Nights/antigravity-lanxi-memory.git ~/.gemini/config/plugins/lanxi-memory
 
 # Windows PowerShell
-git clone https://github.com/A16Nights/lanxi-memory.git "$env:USERPROFILE\.gemini\config\plugins\lanxi-memory"
+git clone https://github.com/A16Nights/antigravity-lanxi-memory.git "$env:USERPROFILE\.gemini\config\plugins\lanxi-memory"
 ```
 
 ### Option B: Download Release Zip
-1. Download the latest `lanxi-memory-v*.zip` from [GitHub Releases](https://github.com/A16Nights/lanxi-memory/releases/latest).
+1. Download the latest `lanxi-memory-v*.zip` from [GitHub Releases](https://github.com/A16Nights/antigravity-lanxi-memory/releases/latest).
 2. Extract it into your Antigravity plugins folder (`~/.gemini/config/plugins/` on macOS/Linux or `%USERPROFILE%\.gemini\config\plugins\` on Windows).
 
 ### Activate
