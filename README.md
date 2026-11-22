@@ -1,14 +1,62 @@
-# 蓝汐 · 潮汐认知图谱（Lanxi Memory · `antigravity-lanxi-memory`）
+<div align="center">
 
-**简体中文** | [English](README.en.md)
+<p>🌐 &nbsp; <strong>简体中文</strong> &nbsp;·&nbsp; <a href="README.en.md">English</a></p>
 
-> **Local-first, zero-dependency cognitive graph memory plugin for Google Antigravity — 5-layer Markdown vault + CJK FTS5 + Tidal forgetting curves + Persona memory gate + Optional AI semantic enhancement + Tidal Starfield UI.**
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/hero-dark.svg">
+  <img src="assets/readme/hero-light.svg" alt="蓝汐 · 潮汐认知图谱（Lanxi Memory）" width="100%">
+</picture>
+
+<p>
+  [![Release](https://img.shields.io/github/v/release/A16Nights/antigravity-lanxi-memory?style=flat-square&label=Release&color=a855f7&labelColor=1e293b)](https://github.com/A16Nights/antigravity-lanxi-memory/releases)
+  [![Stars](https://img.shields.io/github/stars/A16Nights/antigravity-lanxi-memory?style=flat-square&label=Stars&color=f59e0b&labelColor=1e293b)](https://github.com/A16Nights/antigravity-lanxi-memory/stargazers)
+  ![Antigravity](https://img.shields.io/badge/Google_Antigravity-Native_Plugin-a855f7?style=flat-square&labelColor=1e293b)
+  ![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22.0.0-10b981?style=flat-square&labelColor=1e293b)
+  ![Zero Deps](https://img.shields.io/badge/Dependencies-Zero-06b6d4?style=flat-square&labelColor=1e293b)
+  [![License](https://img.shields.io/badge/License-MIT-6366f1?style=flat-square&labelColor=1e293b)](./LICENSE)
+</p>
+
+<p>
+  <strong>五层纯 Markdown 真源记忆 + CJK FTS5 + 幂律潮汐遗忘曲线 + 交互式潮汐星海图谱（100% 本地零依赖）</strong>
+</p>
+
+<p>
+  <a href="#features">✨ 功能全景</a> &nbsp;·&nbsp; <a href="#architecture">🧩 工作原理</a> &nbsp;·&nbsp; <a href="#installation">🚀 快速安装</a> &nbsp;·&nbsp; <a href="#mcp-tools">🧰 MCP 工具</a> &nbsp;·&nbsp; <a href="#storage">📂 数据存储</a> &nbsp;·&nbsp; <a href="#azure-suite">🌌 苍蓝全家桶</a>
+</p>
+
+</div>
 
 **蓝汐（Lanxi）** 是一款专为 **Google Antigravity** 打造的纯本地长期记忆与认知图谱插件。它将「人类可读的五层纯 Markdown 真源文档（Vault）」与「幂律 / 指数潮汐遗忘曲线」深度融合：核心架构约定与长期目标永久锚定不衰减，日常情景随时间自然退潮、被频繁检索或强化则涨潮晋升，所有归档均保留完整原文件，**绝不静默丢弃任何记忆**。
 
----
+<table>
+<tr>
+<td width="50%" valign="top">
+<h4>🏛️ 五层认知结构 & 硬保护防失忆</h4>
+定海锚点层（<code>anchor</code>/<code>self</code>/<code>goals</code>）永久保留；高重要度节点（<code>importance >= 0.7</code>）自动硬保护，防止误删与误降级。
+</td>
+<td width="50%" valign="top">
+<h4>🌊 磁盘即真源 & CJK FTS5 检索</h4>
+基于 <code>node:sqlite</code> WAL + 中文双字切词 FTS5；支持 Obsidian / VS Code 直接编辑 <code>vault/*.md</code>，顶栏实时感知 <code>dataStale</code> 一键重建索引。
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<h4>🌌 交互式「潮汐星海」Canvas 图谱</h4>
+同心轨道星图直观展示锚点、知识与情景节点，支持拖拽缩放、悬停高亮关联边、可视化建边与一键潮汐维护台。
+</td>
+<td width="50%" valign="top">
+<h4>✨ 100% 离线可用 + 可选 AI 增强</h4>
+零 API Key 即可离线满血运行；接入任意 OpenAI 兼容接口后可选解锁「FTS5 + 语义向量混合检索」与「AI 情景智能凝结」。
+</td>
+</tr>
+</table>
 
-## ✨ 功能全景
+<h2 id="features">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/sec-features-dark.svg">
+  <img src="assets/readme/sec-features-light.svg" alt="功能全景" width="100%">
+</picture>
+</h2>
 
 ### 1. 五层认知结构与防误锁硬保护机制
 - **定海锚点层（永久保留 `retention = 1.0`）**：
@@ -36,29 +84,48 @@
 
 ### 4. 原创「潮汐星海」可视化工作台（Sidecar + 独立 Web UI）
 - **两行居中对齐顶栏**：第一行集成标题、状态徽标与苍蓝套件标准工具栏，第二行居中排布五大功能标签页，视觉平衡清爽。
-- **🌌 潮汐星海（交互式 Canvas 星图）**：
-  - 同心轨道潮汐星图（内圈永久锚点 → 中圈结构/知识 → 外圈情景/待决），支持鼠标拖拽平移、滚轮缩放、悬停高亮关联边、点击查看节点详情与可视化建边。
-- **📜 记忆流 & 🎯 锚点与目标**：
-  - 支持按层级、项目（Project）、关键词与保留度筛选，面板内直接新建、编辑、强化、晋升、建边或归档记忆节点。
-- **⚙ 潮汐维护台**：
-  - 潮汐水位分布条、待晋升/待归档候选队列、批量重要度确认（`set_importance`）、手动合并凝结、索引重建及外部 Markdown / Obsidian Vault 只读导入。
+- **🌌 潮汐星海（交互式 Canvas 星图）**：同心轨道潮汐星图（内圈永久锚点 → 中圈结构/知识 → 外圈情景/待决），支持鼠标拖拽平移、滚轮缩放、悬停高亮关联边、点击查看节点详情与可视化建边。
+- **📜 记忆流 & 🎯 锚点与目标**：支持按层级、项目（Project）、关键词与保留度筛选，面板内直接新建、编辑、强化、晋升、建边或归档记忆节点。
+- **⚙ 潮汐维护台**：潮汐水位分布条、待晋升/待归档候选队列、批量重要度确认（`set_importance`）、手动合并凝结、索引重建及外部 Markdown / Obsidian Vault 只读导入。
 
 ### 5. 可选 AI 语义增强（默认关闭，100% 离线可用）
 - 不配置任何 API Key 即可 100% 本地离线完整运行；
-- 在「潮汐维护 → 可选 AI 增强接口」中接入任意 OpenAI 兼容接口后，可额外解锁：
-  - **混合语义向量检索（FTS5 + Cosine Similarity）**；
-  - **AI 智能凝结（自动将多条零散 `episodic` 情景提炼合成为高密度 `knowledge` 节点）**。
+- 在「潮汐维护 → 可选 AI 增强接口」中接入任意 OpenAI 兼容接口后，可额外解锁 **混合语义向量检索（FTS5 + Cosine Similarity）** 与 **AI 智能凝结（自动将多条零散 `episodic` 情景提炼合成为高密度 `knowledge` 节点）**。
 
 ### 6. 苍蓝统一视觉与交互体系
 - **Neko Glass 毛玻璃界面 & 苍蓝主题色调中心**：深色/浅色切换、自定义毛玻璃下拉框（`AzureSelect`）与确认弹窗、6 套官方配色预设 + 自定义双色 + 4 个自定义栏位跨插件同步、左侧栏快捷入口开关、独立浏览器全屏 `Web UI` 与 GitHub Release 在线更新检查。
 
----
+<h2 id="architecture">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/sec-arch-dark.svg">
+  <img src="assets/readme/sec-arch-light.svg" alt="工作原理与架构" width="100%">
+</picture>
+</h2>
 
-## 🚀 快速安装
+```mermaid
+flowchart TD
+  V["Markdown 真源库<br/>vault/*.md (Obsidian 兼容)"] <-->|"实时 dataStale 检测"| IDX["SQLite WAL + CJK FTS5<br/>(+ 可选语义向量)"]
+  IDX -->|"潮汐保留度加权"| REC["cg_recall / PreInvocation<br/>防噪门控 + 人设记忆联动"]
+  REC -->|"访问强化 · 涨潮晋升"| LAY["五层认知结构<br/>anchor/self/goals · structural/knowledge · episodic/unresolved"]
+  LAY -->|"高重要度 >= 0.7 硬保护"| UI["潮汐星海 Canvas 工作台<br/>图谱 / 记忆流 / 维护台"]
+```
 
-> 前置要求：**Node.js >= 22.0.0**（使用内置 `node:sqlite`，零第三方 npm 依赖）。
+<h2 id="installation">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/sec-install-dark.svg">
+  <img src="assets/readme/sec-install-light.svg" alt="快速安装与上手" width="100%">
+</picture>
+</h2>
 
-将本仓库克隆到 Antigravity 全局插件目录：
+> **前置要求**：**Node.js >= 22.0.0**（零第三方 npm 运行时依赖，纯 Node.js 原生 ESM 实现）。
+
+### 方式一 · 一句话让 Antigravity 帮你自动安装（推荐）
+
+直接把下面这句话发给 Antigravity 即可自动完成克隆与核验：
+
+> 帮我把 `https://github.com/A16Nights/antigravity-lanxi-memory.git` 克隆到本机 Antigravity 全局插件目录，目录名设为 `lanxi-memory`，检查目录无误后告诉我，我再按 `Ctrl+R` 重载生效。
+
+### 方式二 · 命令行手动克隆
 
 ```powershell
 # Windows (PowerShell)
@@ -70,9 +137,12 @@ git clone https://github.com/A16Nights/antigravity-lanxi-memory.git ~/.gemini/co
 
 重启或重载 Antigravity（`Ctrl+R`），在 **Plugins** 页面确认 **蓝汐 · 潮汐认知图谱** 已启用即可从左侧栏或右侧辅助面板打开。
 
----
-
-## 🧰 MCP 工具一览（12 个）
+<h2 id="mcp-tools">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/sec-tools-dark.svg">
+  <img src="assets/readme/sec-tools-light.svg" alt="MCP 工具一览" width="100%">
+</picture>
+</h2>
 
 | 工具名 | 作用 |
 | --- | --- |
@@ -89,23 +159,57 @@ git clone https://github.com/A16Nights/antigravity-lanxi-memory.git ~/.gemini/co
 | `cg_stats` | 获取各层级节点统计、潮汐水位分布、`dataStale` 磁盘新鲜度检测与脱敏配置 |
 | `cg_import_vault` | 严格只读扫描并导入外部 Markdown 目录 / Obsidian Vault / DSH 记忆库 |
 
----
+<h2 id="storage">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/sec-storage-dark.svg">
+  <img src="assets/readme/sec-storage-light.svg" alt="数据与配置存储" width="100%">
+</picture>
+</h2>
 
-## 📂 数据与配置存储
+<details open>
+<summary><strong>点击展开查看本机数据目录与苍蓝套件共享配置路径</strong></summary>
 
-- **Markdown 记忆真源库**：`~/.gemini/lanxi-memory/vault/`（或兼容目录 `~/.gemini/lingshu-cortex/vault/`）
+<br>
+
+- **Markdown 记忆真源库**：`~/.gemini/lanxi-memory/vault/`（兼容目录 `~/.gemini/lingshu-cortex/vault/`）
 - **本地全文与向量索引库**：`~/.gemini/lanxi-memory/index.sqlite`
 - **插件与可选 AI 接口配置**：`~/.gemini/lanxi-memory/config.json`
 - **苍蓝套件共享主题 / 左侧栏配置**：`~/.gemini/azure-theme.json`、`~/.gemini/azure-sidebar-nav.json`
 
+</details>
+
+<h2 id="azure-suite">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/sec-suite-dark.svg">
+  <img src="assets/readme/sec-suite-light.svg" alt="苍蓝套件全家桶" width="100%">
+</picture>
+</h2>
+
+**苍蓝套件（Azure Suite）** 8 款插件共享统一的 **Neko Glass 毛玻璃界面**、跨插件同步的 **苍蓝主题色调中心**（`~/.gemini/azure-theme.json`）以及可自由开关的 **左侧栏快捷入口**（`~/.gemini/azure-sidebar-nav.json`）：
+
+| 插件 | 仓库 | 核心能力 |
+| --- | --- | --- |
+| ✦ **苍蓝协奏台** | [antigravity-external-orchestrator](https://github.com/A16Nights/antigravity-external-orchestrator) | 多渠道外部模型协同调度、自定义调度角色、容灾断路器与全链路实时监控 |
+| 🪐 **苍蓝星轨** | [antigravity-azure-orbit](https://github.com/A16Nights/antigravity-azure-orbit) | 将外部大模型直接挂载进 Antigravity 左下角原生模型下拉菜单担任主脑 |
+| 🧭 **苍蓝罗盘** | [antigravity-azure-compass](https://github.com/A16Nights/antigravity-azure-compass) | Agent 工作模式预设中心、上下文水位监测与自动 /compact、苍蓝套件左侧栏总控 |
+| 🏛️ **苍蓝回廊** | [antigravity-azure-corridor](https://github.com/A16Nights/antigravity-azure-corridor) | 只读原生会话 FTS5 全文检索、自定义项目分组、优先级标签与独立安全归档箱 |
+| 🌌 **蓝汐 · 潮汐认知图谱** &nbsp;`✦ 当前仓库` | [antigravity-lanxi-memory](https://github.com/A16Nights/antigravity-lanxi-memory) | 五层纯 Markdown 真源记忆、CJK FTS5、潮汐遗忘曲线与交互式潮汐星海图谱 |
+| 💎 **苍蓝魂匣** | [antigravity-soul-md](https://github.com/A16Nights/antigravity-soul-md) | 多人设卡热切换、工作区专属绑定、外接模型智能防掉线锚点与分层文件记忆 |
+| 💭 **思语中文** | [antigravity-think-zh](https://github.com/A16Nights/antigravity-think-zh) | 内部思考语言简体中文 / 英文双档热切换、双通道防漂移与实时注入预览 |
+| 🔮 **苍蓝棱镜** | [antigravity-azure-prism](https://github.com/A16Nights/antigravity-azure-prism) | 原生 MCP App 思维链实时观测、免密钥零 Token 机翻与外部模型双通道译文 |
+
 ---
 
-## 💡 灵感致谢
+### 💡 灵感致谢
 
 本项目为基于 Antigravity 插件协议独立设计与编写的原生实现，设计理念受以下优秀开源项目启发，特此致谢：
 - [dsh-memory（灵枢）](https://github.com/FuRongJun-1999/dsh-memory) —— 五层 Markdown 认知图谱、硬保护防失忆与确定性规则理念
 - [CortexGraph](https://github.com/prefrontal-systems/cortexgraph) —— 类人幂律遗忘曲线与访问强化机制
 
-## 📄 License
+---
 
-[MIT](./LICENSE)
+<div align="center">
+
+📄 Released under the **[MIT License](./LICENSE)** · Crafted for **Google Antigravity**
+
+</div>
