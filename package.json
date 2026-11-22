@@ -1,6 +1,6 @@
 {
   "name": "antigravity-lanxi-memory",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Local-first cognitive graph memory plugin for Antigravity with Markdown vault, SQLite FTS5, tidal forgetting curves, optional AI enhancement, and Tidal Starfield UI.",
   "type": "module",
   "license": "MIT",
