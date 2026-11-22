@@ -2,7 +2,7 @@
   "$schema": "https://antigravity.google/schemas/v1/plugin.json",
   "name": "lingshu-cortex",
   "displayName": "蓝汐 · 潮汐认知图谱",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "logo": "assets/logo.svg",
   "description": "蓝汐（Lanxi）长期记忆系统：融合五层 Markdown 认知图与潮汐遗忘曲线，支持自动召回、情景沉淀、硬保护防失忆、可选 AI 智能凝结/语义检索与潮汐星海工作台。",
   "suggestedPrompts": [
