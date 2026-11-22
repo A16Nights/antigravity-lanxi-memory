@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { getSidebarToolDefinition, getSidebarResourceDefinition, getSidebarResourceUri, handleSidebarToolCall, buildSidebarResourceReadResult } from "./lib/sidebar-nav.mjs";
 import readline from "node:readline";
 import { LanxiEngine, VALID_LAYERS } from "./lib/engine.mjs";
 
@@ -248,6 +249,8 @@ async function dispatchTool(name, args = {}) {
       return engine.getOverview();
     case "cg_import_vault":
       return engine.importFromVault(args.sourceDir);
+    case "cg_import_dsh":
+      return engine.importFromDsh(args.sourceDir);
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
@@ -285,18 +288,38 @@ async function handleLine(line) {
       case "initialize":
         sendResponse(id, {
           protocolVersion: params?.protocolVersion || "2024-11-05",
-          capabilities: { tools: {} },
-          serverInfo: { name: "lanxi-memory", version: "1.1.1" },
+          capabilities: { tools: {}, resources: {} },
+          serverInfo: { name: "lingshu-cortex", version: "1.3.1" },
         });
         break;
       case "ping":
         sendResponse(id, {});
         break;
-      case "tools/list":
-        sendResponse(id, { tools: TOOLS });
+      case "tools/list": {
+        const sbTool = getSidebarToolDefinition("lingshu-cortex");
+        sendResponse(id, { tools: sbTool ? [...TOOLS, sbTool] : TOOLS });
         break;
+      }
+      case "resources/list": {
+        const sbRes = getSidebarResourceDefinition("lingshu-cortex");
+        sendResponse(id, { resources: sbRes ? [sbRes] : [] });
+        break;
+      }
+      case "resources/read": {
+        const uri = params?.uri;
+        if (uri === getSidebarResourceUri("lingshu-cortex")) {
+          sendResponse(id, buildSidebarResourceReadResult("lingshu-cortex"));
+        } else {
+          sendError(id, -32602, `Unknown resource: ${uri}`);
+        }
+        break;
+      }
       case "tools/call": {
         const toolName = params?.name;
+        if (toolName === "open_lingshu_cortex_ui") {
+          sendResponse(id, handleSidebarToolCall("lingshu-cortex"));
+          break;
+        }
         const toolArgs = params?.arguments || {};
         try {
           const result = await dispatchTool(toolName, toolArgs);

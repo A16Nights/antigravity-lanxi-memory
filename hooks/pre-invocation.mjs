@@ -1,21 +1,16 @@
 import path from "node:path";
 import { LanxiEngine } from "../lib/engine.mjs";
+import {
+  cleanRecallQuery,
+  shouldRunAutoRecall,
+  filterRecallResults,
+  isPersonaMemoryDisabled,
+} from "../lib/recall-filter.mjs";
 
 async function readStdin() {
   const chunks = [];
   for await (const chunk of process.stdin) chunks.push(chunk);
   return Buffer.concat(chunks).toString("utf8").trim();
-}
-
-const FILLER_RE = /(?:不需要的|不需要|有没有|那就|这个|那个|我们|你们|他们|它们|咱们|这里|那里|一下吧|一下|什么|可以|怎么|没有|还是|或者|已经|现在|刚才|觉得|认为|需要|跟进|但是|不过|其实|好像|大概|可能|应该|随便|都行|因为|所以|如果|然后|就是|不是|帮我|给我|看看|好呀|好的|谢谢)/g;
-const EDGE_PARTICLE_RE = /[吗呢吧呀啊哦嘛，。！？、,.!?\s]+/g;
-
-function extractRecallQuery(text) {
-  return String(text || "")
-    .replace(FILLER_RE, " ")
-    .replace(EDGE_PARTICLE_RE, " ")
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 function extractProjectName(input) {
@@ -24,6 +19,56 @@ function extractProjectName(input) {
   if (!trimmed || /^[A-Za-z]:$/.test(trimmed)) return "";
   const base = path.basename(trimmed);
   return base.length >= 2 ? base : "";
+}
+
+function buildAutoRecallBlock(engine, cfg, userText, project) {
+  const gate = shouldRunAutoRecall(userText);
+  if (!gate.allow) return null;
+
+  const cleanedQuery = gate.cleaned || cleanRecallQuery(userText);
+  const strictness = cfg.recallStrictness || "strict";
+  const window = cfg.recallWindow || 6;
+
+  const hits = engine.recall({
+    query: cleanedQuery,
+    layers: ["structural", "knowledge", "episodic", "goals", "unresolved"],
+    project,
+    allowFallback: false,
+    strictness,
+    limit: window,
+    touch: false,
+  });
+
+  const idHits = engine
+    .recall({
+      query: cleanedQuery,
+      layers: ["anchor", "self"],
+      project,
+      allowFallback: false,
+      strictness,
+      limit: 2,
+      touch: false,
+    })
+    .filter((h) => {
+      const qLower = cleanedQuery.toLowerCase();
+      return (
+        String(h.title || "").toLowerCase().includes(qLower) ||
+        (h.tags || []).some((t) => qLower.includes(String(t).toLowerCase()))
+      );
+    });
+
+  const merged = [...idHits, ...(Array.isArray(hits) ? hits : [])].slice(0, window);
+  const kept = filterRecallResults(merged, {
+    minScore: typeof cfg.autoRecallMinScore === "number" ? cfg.autoRecallMinScore : 0.55,
+    maxChars: cfg.autoRecallMaxChars || cfg.recallMaxChars || 1400,
+  });
+  if (kept.length === 0) return null;
+
+  const lines = ["【蓝汐自动召回（参考记忆，仅标题+摘要；需要全文请按 id 调用 cg_read）】"];
+  for (const item of kept) {
+    lines.push(`- [${item.layer}|id:${item.id}] ${item.title}: ${item.preview}`);
+  }
+  return lines.join("\n");
 }
 
 function main(input) {
@@ -39,53 +84,18 @@ function main(input) {
     }
 
     const parts = [];
-    const cleanedQuery = extractRecallQuery(userText);
-    const project = extractProjectName(input);
 
-    if (cfg.autoRecall && userText.length >= 8 && cleanedQuery.length >= 3) {
-      const strictness = cfg.recallStrictness || "strict";
-      const hits = engine.recall({
-        query: cleanedQuery,
-        layers: ["structural", "knowledge", "episodic", "goals", "unresolved"],
-        project,
-        allowFallback: false,
-        strictness,
-        limit: cfg.recallWindow || 6,
-        touch: false,
-      });
-
-      const idHits = engine
-        .recall({
-          query: cleanedQuery,
-          layers: ["anchor", "self"],
-          project,
-          allowFallback: false,
-          strictness,
-          limit: 2,
-          touch: false,
-        })
-        .filter((h) => {
-          const qLower = cleanedQuery.toLowerCase();
-          return (
-            String(h.title || "").toLowerCase().includes(qLower) ||
-            (h.tags || []).some((t) => qLower.includes(String(t).toLowerCase()))
-          );
-        });
-
-      const merged = [...idHits, ...hits].slice(0, cfg.recallWindow || 6);
-      if (merged.length > 0) {
-        const recallLines = ["【蓝汐自动召回（参考记忆，按需可用 cg_read 读全文）】"];
-        let budget = cfg.recallMaxChars || 1600;
-        for (const item of merged) {
-          const line = `- [${item.layer}|id:${item.id}|重要度:${item.importance}] ${item.title}: ${item.preview}`;
-          if (line.length > budget) break;
-          recallLines.push(line);
-          budget -= line.length + 1;
-        }
-        if (recallLines.length > 1) {
-          parts.push(recallLines.join("\n"));
-        }
+    try {
+      const personaState = isPersonaMemoryDisabled(input, cfg.memoryDisabledPersonas);
+      if (personaState.disabled) {
+        return {};
       }
+      if (cfg.autoRecall) {
+        const block = buildAutoRecallBlock(engine, cfg, userText, extractProjectName(input));
+        if (block) parts.push(block);
+      }
+    } catch {
+      // fail-open：召回链任何异常都不影响主流程
     }
 
     const interval = Number(cfg.turnReminderInterval ?? 10);

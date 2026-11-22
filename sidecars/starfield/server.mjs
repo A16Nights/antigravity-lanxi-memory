@@ -1,4 +1,7 @@
 import { checkGithubUpdate } from "../../lib/update-checker.mjs";
+import { isLeftSidebarEnabled, setLeftSidebarEnabled, listOwnedPluginsNavState, registerSidecarRuntime, refreshAntigravityMcpServers, injectSidebarToggleWidget } from "../../lib/sidebar-nav.mjs";
+import { handleAzureThemeHttp } from "../../lib/azure-theme.mjs";
+import { injectAzureUiKit } from "../../lib/azure-ui-kit.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import http from "node:http";
@@ -73,7 +76,7 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && (pathname === "/" || pathname === "/index.html")) {
     const html = fs.readFileSync(HTML_PATH, "utf8");
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-    res.end(html);
+    res.end(injectAzureUiKit(injectSidebarToggleWidget(html, "lingshu-cortex"), "lingshu-cortex"));
     return;
   }
 
@@ -85,6 +88,31 @@ const server = http.createServer(async (req, res) => {
     try {
       engine.config = engine.loadConfig();
 
+      if (await handleAzureThemeHttp(req, res)) return;
+    if (req.method === "GET" && pathname === "/api/sidebar-nav") {
+        sendJson(res, 200, {
+          ok: true,
+          pluginId: "lingshu-cortex",
+          showInLeftSidebar: isLeftSidebarEnabled("lingshu-cortex"),
+          plugins: listOwnedPluginsNavState()
+        });
+        return;
+      }
+      if (req.method === "POST" && pathname === "/api/sidebar-nav") {
+        const body = await readBody(req);
+        const targetId = String(body.pluginId || "lingshu-cortex").trim();
+        const nextVal = Boolean(body.showInLeftSidebar);
+        setLeftSidebarEnabled(targetId, nextVal);
+        const rf = await refreshAntigravityMcpServers();
+        sendJson(res, 200, {
+          ok: true,
+          pluginId: targetId,
+          showInLeftSidebar: nextVal,
+          refreshed: Boolean(rf?.ok),
+          plugins: listOwnedPluginsNavState()
+        });
+        return;
+      }
       if (req.method === "GET" && pathname === "/api/overview") {
         const overview = engine.getOverview();
         const webUrl = TOKEN
@@ -262,6 +290,13 @@ server.listen(PORT, "127.0.0.1", () => {
   const addr = server.address();
   if (addr && typeof addr === "object") actualPort = addr.port;
   console.log(`[lanxi-memory starfield] listening on http://127.0.0.1:${actualPort}`);
+  try {
+    const __a = server.address();
+    const __p = (__a && typeof __a === "object" && __a.port) ? __a.port : Number(PORT) || 0;
+    const __t = (process.env.ANTIGRAVITY_SIDECAR_UI_TOKEN || process.env.ANTIGRAVITY_SIDECAR_AUTH_TOKEN || process.env.ANTIGRAVITY_SIDECAR_WEB_TOKEN || "").trim();
+    const __u = __t ? `http://127.0.0.1:${__p}/?token=${encodeURIComponent(__t)}` : `http://127.0.0.1:${__p}/`;
+    registerSidecarRuntime("lingshu-cortex", { port: __p, url: __u });
+  } catch {}
 });
 
 function shutdown() {

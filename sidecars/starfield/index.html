@@ -59,14 +59,27 @@
       top: 0;
       z-index: 30;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 9px;
       padding: 10px 16px;
       background: var(--glass);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
+    }
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    .header-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
     }
     .brand {
       display: flex;
@@ -357,33 +370,38 @@
 </head>
 <body>
   <header class="glass-bar">
-    <div class="brand">
-      <svg width="24" height="24" viewBox="0 0 256 256">
-        <circle cx="128" cy="128" r="110" fill="#072c44" stroke="#38bdf8" stroke-width="10"/>
-        <path d="M52 150 Q92 116 128 146 T204 136" fill="none" stroke="#38bdf8" stroke-width="16" stroke-linecap="round"/>
-        <circle cx="132" cy="76" r="16" fill="#e0f2fe"/>
-        <circle cx="92" cy="96" r="10" fill="#7dd3fc"/>
-        <circle cx="170" cy="100" r="10" fill="#a5b4fc"/>
-      </svg>
-      <span>蓝汐 · 潮汐星海</span>
-      <span id="ai-status-badge" class="badge b-self hidden">✨ 语义增强</span>
+    <div class="header-top">
+      <div class="brand">
+        <svg width="24" height="24" viewBox="0 0 256 256">
+          <circle cx="128" cy="128" r="110" fill="#072c44" stroke="#38bdf8" stroke-width="10"/>
+          <path d="M52 150 Q92 116 128 146 T204 136" fill="none" stroke="#38bdf8" stroke-width="16" stroke-linecap="round"/>
+          <circle cx="132" cy="76" r="16" fill="#e0f2fe"/>
+          <circle cx="92" cy="96" r="10" fill="#7dd3fc"/>
+          <circle cx="170" cy="100" r="10" fill="#a5b4fc"/>
+        </svg>
+        <span>蓝汐 · 潮汐星海</span>
+        <span id="ai-status-badge" class="badge b-self hidden">✨ 语义增强</span>
+      </div>
+
+      <div class="row">
+        <button id="theme-btn" class="sm" onclick="toggleTheme()">🌙 深海</button>
+        <button class="sm" onclick="copyWebUrl()" title="复制浏览器全屏访问地址">全屏地址</button>
+        <button class="primary sm" onclick="openWriteModal()">+ 刻录</button>
+      </div>
     </div>
 
-    <div class="seg-nav">
-      <button class="seg-btn active" data-view="starfield" onclick="switchView('starfield')">✦ 潮汐星海</button>
-      <button class="seg-btn" data-view="stream" onclick="switchView('stream')">≋ 记忆流</button>
-      <button class="seg-btn" data-view="anchors" onclick="switchView('anchors')">◈ 锚点与目标</button>
-      <button class="seg-btn" data-view="maintain" onclick="switchView('maintain')">⚙ 潮汐维护 <span id="maint-badge" class="badge b-goals">0</span></button>
-    </div>
-
-    <div class="row">
-      <button id="theme-btn" class="sm" onclick="toggleTheme()">🌙 深海</button>
-      <button class="sm" onclick="copyWebUrl()" title="复制浏览器全屏访问地址">全屏地址</button>
-      <button class="primary sm" onclick="openWriteModal()">+ 刻录</button>
+    <div class="header-nav">
+      <div class="seg-nav">
+        <button class="seg-btn active" data-view="starfield" onclick="switchView('starfield')">✦ 潮汐星海</button>
+        <button class="seg-btn" data-view="stream" onclick="switchView('stream')">≋ 记忆流</button>
+        <button class="seg-btn" data-view="anchors" onclick="switchView('anchors')">◈ 锚点与目标</button>
+        <button class="seg-btn" data-view="maintain" onclick="switchView('maintain')">⚙ 潮汐维护 <span id="maint-badge" class="badge b-goals">0</span></button>
+      </div>
     </div>
   </header>
 
   <main>
+    <div id="lanxi-tabbar" class="azure-tabbar hidden"></div>
     <div id="stale-banner" class="card row between hidden" style="border-color: var(--amber); background: rgba(251, 191, 36, 0.08); margin-bottom: 12px;">
       <div id="stale-banner-text" style="font-size: 12.5px; color: var(--amber);">⚠ 检测到本地 Markdown 记忆文件与索引不同步，建议同步索引。</div>
       <button class="sm primary" onclick="rebuildIndex()">立即同步索引</button>
@@ -1411,8 +1429,54 @@
       await refreshAll();
     }
 
+    let lanxiTabStore = null;
+    function getLanxiTabStore() {
+      if (!lanxiTabStore && typeof window.createAzureTabStore === "function") {
+        lanxiTabStore = window.createAzureTabStore("lingshu_cortex_tabs_v1");
+      }
+      return lanxiTabStore;
+    }
+    function renderLanxiTabBar() {
+      const bar = document.getElementById("lanxi-tabbar");
+      const store = getLanxiTabStore();
+      if (!bar || !store) return;
+      const st = store.getState();
+      if (!st.tabs.length && !st.closed.length) {
+        bar.classList.add("hidden");
+        return;
+      }
+      bar.classList.remove("hidden");
+      bar.innerHTML = st.tabs.map((t) => `
+        <div class="azure-tab-pill ${st.activeId === t.id ? "active" : ""}" data-open-tab="${esc(t.id)}" title="${esc(t.title)}">
+          <span class="tab-act" data-pin-tab="${esc(t.id)}" title="${t.pinned ? "取消置顶" : "置顶标签"}">${t.pinned ? "📌" : "·"}</span>
+          <span class="tab-txt">${esc(t.title)}</span>
+          <span class="tab-act" data-close-tab="${esc(t.id)}" title="关闭标签">×</span>
+        </div>
+      `).join("") + (st.closed.length ? `<button class="azure-tab-reopen" id="btn-lanxi-reopen" title="恢复刚关闭的记忆标签">↩ 恢复(${st.closed.length})</button>` : "");
+      bar.querySelectorAll("[data-open-tab]").forEach((el) => {
+        el.onclick = (e) => {
+          if (e.target.closest("[data-pin-tab]") || e.target.closest("[data-close-tab]")) return;
+          openDetail(el.getAttribute("data-open-tab"));
+        };
+      });
+      bar.querySelectorAll("[data-pin-tab]").forEach((el) => {
+        el.onclick = (e) => { e.stopPropagation(); store.togglePin(el.getAttribute("data-pin-tab")); renderLanxiTabBar(); };
+      });
+      bar.querySelectorAll("[data-close-tab]").forEach((el) => {
+        el.onclick = (e) => { e.stopPropagation(); store.close(el.getAttribute("data-close-tab")); renderLanxiTabBar(); };
+      });
+      const reopen = document.getElementById("btn-lanxi-reopen");
+      if (reopen) reopen.onclick = () => { const item = store.reopenLast(); renderLanxiTabBar(); if (item) openDetail(item.id); };
+    }
+    setTimeout(renderLanxiTabBar, 260);
+
     async function openDetail(id) {
       detailNode = await api("/api/memory?id=" + encodeURIComponent(id));
+      const store = getLanxiTabStore();
+      if (store && detailNode && detailNode.id) {
+        store.open({ id: detailNode.id, title: detailNode.title || detailNode.id });
+        renderLanxiTabBar();
+      }
       document.getElementById("d-id").textContent = "节点：" + detailNode.id;
       document.getElementById("d-badges").innerHTML = `
         <span class="badge b-${esc(detailNode.layer)}">${esc(detailNode.layer)}</span>
@@ -1430,6 +1494,71 @@
     }
     function closeDetailModal() { document.getElementById("detail-modal").classList.add("hidden"); }
 
+    function azureConfirm({ title = "确认操作", message = "", note = "", okText = "确认", cancelText = "取消", danger = true } = {}) {
+      return new Promise((resolve) => {
+        if (!document.getElementById("az-confirm-style")) {
+          const st = document.createElement("style");
+          st.id = "az-confirm-style";
+          st.textContent = `
+            .az-confirm-mask{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.56);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px;}
+            .az-confirm-box{width:100%;max-width:390px;background:var(--card,var(--panel,#181e2e));color:var(--text,#e6edf7);border:1px solid var(--border,rgba(148,163,184,0.24));border-radius:12px;padding:16px;box-shadow:0 18px 42px rgba(0,0,0,0.42);}
+            .az-confirm-box h3{margin:0 0 10px;font-size:15px;font-weight:600;color:var(--text,#e6edf7);}
+            .az-confirm-msg{margin:0 0 6px;font-size:13px;line-height:1.6;color:var(--text,#e6edf7);}
+            .az-confirm-note{margin:0 0 4px;font-size:12px;line-height:1.5;color:var(--muted,#94a3b8);}
+            .az-confirm-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;}
+            .az-confirm-btn{padding:6px 13px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid var(--border,rgba(148,163,184,0.28));background:var(--panel-2,rgba(148,163,184,0.1));color:var(--text,#e6edf7);transition:all .15s ease;}
+            .az-confirm-btn:hover{border-color:var(--accent,#3b82f6);transform:translateY(-1px);}
+            .az-confirm-btn.danger{background:rgba(247,118,142,0.16);border-color:var(--danger,#f7768e);color:var(--danger,#f7768e);}
+            .az-confirm-btn.danger:hover{background:var(--danger,#f7768e);color:#fff;}
+            .az-confirm-btn.primary{background:var(--accent,#3b82f6);border-color:var(--accent,#3b82f6);color:#fff;}
+          `;
+          document.head.appendChild(st);
+        }
+        const mask = document.createElement("div");
+        mask.className = "az-confirm-mask";
+        const box = document.createElement("div");
+        box.className = "az-confirm-box";
+        box.setAttribute("role", "dialog");
+        box.setAttribute("aria-modal", "true");
+        const h3 = document.createElement("h3");
+        h3.textContent = title;
+        const pMsg = document.createElement("p");
+        pMsg.className = "az-confirm-msg";
+        pMsg.textContent = message;
+        box.appendChild(h3);
+        box.appendChild(pMsg);
+        if (note) {
+          const pNote = document.createElement("p");
+          pNote.className = "az-confirm-note";
+          pNote.textContent = note;
+          box.appendChild(pNote);
+        }
+        const actions = document.createElement("div");
+        actions.className = "az-confirm-actions";
+        const btnCancel = document.createElement("button");
+        btnCancel.className = "az-confirm-btn";
+        btnCancel.textContent = cancelText;
+        const btnOk = document.createElement("button");
+        btnOk.className = "az-confirm-btn " + (danger ? "danger" : "primary");
+        btnOk.textContent = okText;
+        actions.appendChild(btnCancel);
+        actions.appendChild(btnOk);
+        box.appendChild(actions);
+        mask.appendChild(box);
+        const close = (val) => {
+          window.removeEventListener("keydown", onKey);
+          mask.remove();
+          resolve(val);
+        };
+        const onKey = (e) => { if (e.key === "Escape") close(false); };
+        btnCancel.onclick = () => close(false);
+        btnOk.onclick = () => close(true);
+        mask.onclick = (e) => { if (e.target === mask) close(false); };
+        window.addEventListener("keydown", onKey);
+        document.body.appendChild(mask);
+      });
+    }
+
     async function saveDetail() {
       if (!detailNode) return;
       const title = document.getElementById("d-title").value.trim();
@@ -1438,7 +1567,14 @@
       const layer = document.getElementById("d-layer").value;
       let override = false;
       if (detailNode.protected && importance < (overview?.config?.autoProtectImportance ?? 0.7)) {
-        if (!confirm("该节点受硬保护，确认降级并解除保护吗？")) return;
+        const ok = await azureConfirm({
+          title: "确认解除硬保护",
+          message: "该记忆节点受硬保护，确定要降低重要度并解除保护吗？",
+          note: "解除后该节点将恢复正常遗忘曲线衰减。",
+          okText: "确认降级",
+          danger: true
+        });
+        if (!ok) return;
         override = true;
       }
       await api("/api/update", { method: "POST", body: JSON.stringify({ id: detailNode.id, title, content, importance, layer, override }) });
@@ -1463,7 +1599,14 @@
       if (!detailNode) return;
       let override = false;
       if (detailNode.protected) {
-        if (!confirm("该节点受硬保护，确认显式归档到 archive 目录吗？")) return;
+        const ok = await azureConfirm({
+          title: "确认归档硬保护节点",
+          message: "该记忆节点受硬保护，确定要显式归档到 archive 目录吗？",
+          note: "归档后不会再参与常规召回，仍可在 archive 目录中找回。",
+          okText: "确认归档",
+          danger: true
+        });
+        if (!ok) return;
         override = true;
       }
       await api("/api/forget", { method: "POST", body: JSON.stringify({ id: detailNode.id, reason: "starfield_archive", override }) });

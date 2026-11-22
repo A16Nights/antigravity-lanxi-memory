@@ -1,19 +1,13 @@
 {
   "$schema": "https://antigravity.google/schemas/v1/plugin.json",
-  "name": "lanxi-memory",
+  "name": "lingshu-cortex",
   "displayName": "蓝汐 · 潮汐认知图谱",
-  "version": "1.1.2",
-  "description": "Zero-dependency local cognitive graph memory plugin for Antigravity: 5-layer Markdown vault, CJK FTS5 search, tidal forgetting curves, optional AI semantic recall/consolidation, and Tidal Starfield UI.",
+  "version": "1.2.0",
   "logo": "assets/logo.svg",
+  "description": "蓝汐（Lanxi）长期记忆系统：融合五层 Markdown 认知图与潮汐遗忘曲线，支持自动召回、情景沉淀、硬保护防失忆、可选 AI 智能凝结/语义检索与潮汐星海工作台。",
   "suggestedPrompts": [
     "从蓝汐记忆库中检索之前记录的架构决策和偏好约定",
     "把刚才定下的关键技术结论写入 knowledge 层并开启硬保护",
-    "打开蓝汐维护队列，对零散情景记忆进行智能凝结与语义索引"
-  ],
-  "author": {
-    "name": "A16Nights",
-    "url": "https://github.com/A16Nights"
-  },
-  "homepage": "https://github.com/A16Nights/antigravity-lanxi-memory",
-  "repository": "https://github.com/A16Nights/antigravity-lanxi-memory"
+    "查看当前蓝汐的活跃目标和潮汐维护队列"
+  ]
 }
