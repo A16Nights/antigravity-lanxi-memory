@@ -8,12 +8,12 @@
 </picture>
 
 <p>
-  [![Release](https://img.shields.io/github/v/release/A16Nights/antigravity-lanxi-memory?style=flat-square&label=Release&color=a855f7&labelColor=1e293b)](https://github.com/A16Nights/antigravity-lanxi-memory/releases)
-  [![Stars](https://img.shields.io/github/stars/A16Nights/antigravity-lanxi-memory?style=flat-square&label=Stars&color=f59e0b&labelColor=1e293b)](https://github.com/A16Nights/antigravity-lanxi-memory/stargazers)
-  ![Antigravity](https://img.shields.io/badge/Google_Antigravity-Native_Plugin-a855f7?style=flat-square&labelColor=1e293b)
-  ![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22.0.0-10b981?style=flat-square&labelColor=1e293b)
-  ![Zero Deps](https://img.shields.io/badge/Dependencies-Zero-06b6d4?style=flat-square&labelColor=1e293b)
-  [![License](https://img.shields.io/badge/License-MIT-6366f1?style=flat-square&labelColor=1e293b)](./LICENSE)
+  <a href="https://github.com/A16Nights/antigravity-lanxi-memory/releases"><img src="https://img.shields.io/github/v/release/A16Nights/antigravity-lanxi-memory?style=flat-square&label=Release&color=a855f7&labelColor=1e293b" alt="Release"></a>
+  <a href="https://github.com/A16Nights/antigravity-lanxi-memory/stargazers"><img src="https://img.shields.io/github/stars/A16Nights/antigravity-lanxi-memory?style=flat-square&label=Stars&color=f59e0b&labelColor=1e293b" alt="Stars"></a>
+  <img src="https://img.shields.io/badge/Google_Antigravity-Native_Plugin-a855f7?style=flat-square&labelColor=1e293b" alt="Antigravity">
+  <img src="https://img.shields.io/badge/Node.js-%3E%3D22.0.0-10b981?style=flat-square&labelColor=1e293b" alt="Node.js">
+  <img src="https://img.shields.io/badge/Dependencies-Zero-06b6d4?style=flat-square&labelColor=1e293b" alt="Zero Deps">
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-6366f1?style=flat-square&labelColor=1e293b" alt="License"></a>
 </p>
 
 <p>
@@ -206,6 +206,6 @@ Independently designed and built on the native Antigravity plugin protocol, insp
 
 <div align="center">
 
-📄 Released under the **[MIT License](./LICENSE)** · Crafted for **Google Antigravity**
+📄 Released under the <a href="./LICENSE"><strong>MIT License</strong></a> · Crafted for <strong>Google Antigravity</strong>
 
 </div>
