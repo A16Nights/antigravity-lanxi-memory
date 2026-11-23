@@ -25,8 +25,8 @@ function redactSecrets(text) {
     .replace(/\bBearer\s+[A-Za-z0-9._-]{12,}\b/gi, "Bearer [REDACTED_TOKEN]");
 }
 
-function readLastAssistantSnippet(transcriptPath, maxChars = 400) {
-  if (!transcriptPath || !fs.existsSync(transcriptPath)) return "";
+function readLastTranscriptMeta(transcriptPath, maxChars = 400) {
+  if (!transcriptPath || !fs.existsSync(transcriptPath)) return { snippet: "", stepIndex: null };
   try {
     const stat = fs.statSync(transcriptPath);
     const readSize = Math.min(stat.size, 64 * 1024);
@@ -35,16 +35,23 @@ function readLastAssistantSnippet(transcriptPath, maxChars = 400) {
     fs.readSync(fd, buf, 0, readSize, Math.max(0, stat.size - readSize));
     fs.closeSync(fd);
     const lines = buf.toString("utf8").split(/\r?\n/).filter(Boolean);
+    let snippet = "";
+    let stepIndex = null;
     for (let i = lines.length - 1; i >= 0; i--) {
       try {
         const obj = JSON.parse(lines[i]);
-        if (obj.source === "MODEL" && obj.content && String(obj.content).trim()) {
-          return String(obj.content).replace(/\s+/g, " ").trim().slice(0, maxChars);
+        if (stepIndex === null && typeof obj.step_index === "number") {
+          stepIndex = obj.step_index;
         }
+        if (!snippet && obj.source === "MODEL" && obj.content && String(obj.content).trim()) {
+          snippet = String(obj.content).replace(/\s+/g, " ").trim().slice(0, maxChars);
+        }
+        if (snippet && stepIndex !== null) break;
       } catch {}
     }
+    return { snippet, stepIndex };
   } catch {}
-  return "";
+  return { snippet: "", stepIndex: null };
 }
 
 function main(input) {
@@ -68,7 +75,9 @@ function main(input) {
     }
 
     const safeUser = redactSecrets(userText).slice(0, 320);
-    const assistantSnippet = redactSecrets(readLastAssistantSnippet(input.transcriptPath, 400));
+    const meta = readLastTranscriptMeta(input.transcriptPath, 400);
+    const assistantSnippet = redactSecrets(meta.snippet);
+    const sourceRef = meta.stepIndex !== null ? `${convId}#${meta.stepIndex}` : convId;
     const title = safeUser.replace(/\s+/g, " ").slice(0, 56);
     const body = assistantSnippet
       ? `**用户问题**：${safeUser}\n\n**回应摘要**：${assistantSnippet}`
@@ -82,6 +91,7 @@ function main(input) {
       confidence: 0.65,
       project: extractProjectName(input) || undefined,
       session_id: convId,
+      source_ref: sourceRef,
       role: "user",
       source: "auto-ingest",
       tags: ["auto-ingest", "antigravity"],

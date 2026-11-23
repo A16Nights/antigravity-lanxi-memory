@@ -62,11 +62,18 @@ function buildAutoRecallBlock(engine, cfg, userText, project) {
     minScore: typeof cfg.autoRecallMinScore === "number" ? cfg.autoRecallMinScore : 0.55,
     maxChars: cfg.autoRecallMaxChars || cfg.recallMaxChars || 1400,
   });
-  if (kept.length === 0) return null;
+
+  // Also search incremental-synced external knowledge sources (if configured)
+  const extHits = engine.searchExternalKnowledge(cleanedQuery, { project, limit: 2 });
+
+  if (kept.length === 0 && extHits.length === 0) return null;
 
   const lines = ["【蓝汐自动召回（参考记忆，仅标题+摘要；需要全文请按 id 调用 cg_read）】"];
   for (const item of kept) {
     lines.push(`- [${item.layer}|id:${item.id}] ${item.title}: ${item.preview}`);
+  }
+  for (const ext of extHits) {
+    lines.push(`- [ext:${ext.source_label}|${ext.rel_path}] ${ext.title}: ${ext.preview}`);
   }
   return lines.join("\n");
 }

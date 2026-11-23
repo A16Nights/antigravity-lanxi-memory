@@ -573,6 +573,10 @@
             <button id="tog-session-start" class="toggle-btn" onclick="toggleFlag('autoSessionStart')">--</button>
           </div>
           <div class="kv-row">
+            <span>开场项目活地图（Project Briefing）</span>
+            <button id="tog-briefing" class="toggle-btn" onclick="toggleFlag('projectBriefing')">--</button>
+          </div>
+          <div class="kv-row">
             <span>每轮自动硬塞召回（PreInvocation Hook）</span>
             <button id="tog-recall" class="toggle-btn" onclick="toggleFlag('autoRecall')">--</button>
           </div>
@@ -619,6 +623,53 @@
             <button class="primary sm" onclick="importVault()">开始只读导入</button>
             <button class="sm" onclick="rebuildIndex()">重建 FTS5 索引</button>
           </div>
+        </div>
+      </div>
+
+      <!-- 外部知识目录（只读增量同步索引） -->
+      <div class="card stack">
+        <div class="row between">
+          <div>
+            <div class="title-sm">📚 外部知识目录（只读增量同步 FTS5）</div>
+            <div class="muted">绑定常用经验总结或笔记目录，按文件修改时间与哈希自动增量切块同步进检索索引，绝不修改或复制原文件。</div>
+          </div>
+          <button class="sm" onclick="syncAllExternalSources()">全部增量同步</button>
+        </div>
+        <div class="row">
+          <input id="ext-src-path" placeholder="本地目录绝对路径，例如：D:\Notes\经验总结" style="flex:2;" />
+          <input id="ext-src-label" placeholder="显示名称（可选）" style="flex:1;" />
+          <input id="ext-src-proj" placeholder="关联项目（可选）" style="flex:1;" />
+          <button class="sm primary" onclick="addExternalSource()">添加并同步</button>
+        </div>
+        <div id="ext-src-list" class="stack"></div>
+      </div>
+
+      <!-- 项目活地图预览 & 跨工具 MCP 共享 -->
+      <div class="two-col">
+        <div class="card stack">
+          <div class="row between">
+            <span class="title-sm">🗺️ 项目活地图（开场聚合预览）</span>
+            <div class="row">
+              <select id="briefing-proj" style="width:auto;max-width:150px;" onchange="loadBriefing(this.value)"></select>
+              <button class="sm" onclick="copyBriefing()">复制</button>
+            </div>
+          </div>
+          <pre id="briefing-preview" style="margin:0;white-space:pre-wrap;font-size:12px;line-height:1.55;max-height:190px;overflow:auto;padding:10px;border-radius:8px;background:rgba(15,23,42,0.35);border:1px solid var(--border);color:var(--text);">暂无项目记忆</pre>
+        </div>
+
+        <div class="card stack">
+          <div class="row between">
+            <span class="title-sm">🔗 跨工具共享（MCP 挂载配置）</span>
+            <div class="row">
+              <select id="mcp-share-fmt" style="width:auto;" onchange="renderMcpShare()">
+                <option value="json">标准 mcpServers JSON</option>
+                <option value="claude">Claude Code CLI 命令</option>
+              </select>
+              <button class="sm primary" onclick="copyMcpShare()">一键复制</button>
+            </div>
+          </div>
+          <div class="muted">粘贴到 Claude Code / Cursor / Codex / DSH 等任意 MCP 客户端，即可直接共用同一个蓝汐记忆库。</div>
+          <pre id="mcp-share-preview" style="margin:0;white-space:pre-wrap;word-break:break-all;font-size:11.5px;line-height:1.45;max-height:155px;overflow:auto;padding:10px;border-radius:8px;background:rgba(15,23,42,0.35);border:1px solid var(--border);color:var(--text);">加载中...</pre>
         </div>
       </div>
 
@@ -719,11 +770,16 @@
           <option value="unresolved">unresolved</option>
         </select>
       </div>
+      <div id="d-source-row" class="row between hidden" style="padding:6px 10px;border-radius:8px;background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.22);">
+        <span id="d-source-text" class="muted" style="font-size:12px;word-break:break-all;"></span>
+        <button class="sm" onclick="copyDetailSource()">复制会话 ID</button>
+      </div>
       <div id="d-edges" class="muted"></div>
       <div class="row between">
         <div class="row">
           <button class="sm" onclick="touchDetail()">涨潮强化</button>
           <button class="sm" onclick="promoteDetail()">晋升知识层</button>
+          <button id="d-rollback-btn" class="sm hidden" onclick="rollbackDetail()">⏪ 回滚上一版</button>
           <button class="sm danger" onclick="forgetDetail()">显式归档</button>
         </div>
         <button class="primary sm" onclick="saveDetail()">保存修改</button>
@@ -868,6 +924,7 @@
 
       // Sync settings controls
       setToggle("tog-session-start", cfg.autoSessionStart !== false);
+      setToggle("tog-briefing", cfg.projectBriefing !== false);
       setToggle("tog-recall", !!cfg.autoRecall);
       document.getElementById("sel-strictness").value = cfg.recallStrictness || "strict";
       setToggle("tog-ingest", !!cfg.autoIngest);
@@ -1193,12 +1250,142 @@
       await refreshAll();
     }
 
+    let mcpShareCache = null;
+
     // Maintenance & Settings
     async function loadMaintain() {
       const q = await api("/api/maintain");
       renderMaint("maint-promote", q.toPromote || [], "promote");
       renderMaint("maint-decay", q.decaying || [], "decay");
       updateSelectedLabel();
+      loadExternalSources().catch(() => {});
+      loadBriefing().catch(() => {});
+      loadMcpShare().catch(() => {});
+    }
+
+    async function loadExternalSources() {
+      const data = await api("/api/external-sources");
+      renderExternalSources(data.sources || []);
+    }
+
+    function renderExternalSources(list) {
+      const box = document.getElementById("ext-src-list");
+      if (!box) return;
+      if (!list.length) {
+        box.innerHTML = '<div class="muted">暂未绑定外部知识目录（添加后每次召回会自动增量匹配其中的经验文档）。</div>';
+        return;
+      }
+      box.innerHTML = list.map((s) => `
+        <div class="feed-item">
+          <div class="row between">
+            <div>
+              <strong>${esc(s.label || s.id)}</strong>
+              ${s.project ? `<span class="badge b-knowledge" style="margin-left:6px;">项目: ${esc(s.project)}</span>` : ""}
+              ${!s.exists ? '<span class="badge b-unresolved" style="margin-left:6px;">路径不存在</span>' : ""}
+              <span class="muted" style="margin-left:8px;font-size:12px;">${s.fileCount || 0} 文件 · ${s.chunkCount || 0} 切片</span>
+            </div>
+            <div class="row">
+              <button class="sm" onclick="toggleExternalSource('${esc(s.id)}', ${s.enabled === false ? "true" : "false"})">${s.enabled === false ? "启用" : "停用"}</button>
+              <button class="sm" onclick="syncExternalSource('${esc(s.id)}')">同步</button>
+              <button class="sm danger" onclick="removeExternalSource('${esc(s.id)}')">移除</button>
+            </div>
+          </div>
+          <div class="muted" style="font-size:11.5px;margin-top:4px;word-break:break-all;">${esc(s.path)}</div>
+        </div>
+      `).join("");
+    }
+
+    async function addExternalSource() {
+      const p = document.getElementById("ext-src-path").value.trim();
+      const label = document.getElementById("ext-src-label").value.trim();
+      const project = document.getElementById("ext-src-proj").value.trim();
+      if (!p) return toast("请输入外部知识目录路径");
+      try {
+        const res = await api("/api/external-sources/add", { method: "POST", body: JSON.stringify({ path: p, label, project }) });
+        document.getElementById("ext-src-path").value = "";
+        document.getElementById("ext-src-label").value = "";
+        document.getElementById("ext-src-proj").value = "";
+        toast(`已绑定并同步：更新 ${res.sync?.filesUpdated || 0} 个文件，${res.sync?.chunksIndexed || 0} 个切片`);
+        await loadExternalSources();
+      } catch (e) { toast("添加失败: " + e.message); }
+    }
+
+    async function syncAllExternalSources() {
+      try {
+        const res = await api("/api/external-sources/sync", { method: "POST", body: JSON.stringify({}) });
+        renderExternalSources(res.sources || []);
+        const r = res.result || {};
+        toast(`同步完成：更新 ${r.filesUpdated || 0}、跳过 ${r.filesSkipped || 0}、清理 ${r.filesRemoved || 0}`);
+      } catch (e) { toast("同步失败: " + e.message); }
+    }
+
+    async function syncExternalSource(id) {
+      try {
+        const res = await api("/api/external-sources/sync", { method: "POST", body: JSON.stringify({ id }) });
+        renderExternalSources(res.sources || []);
+        toast(`单源同步完成：更新 ${res.result?.filesUpdated || 0} 个文件`);
+      } catch (e) { toast("同步失败: " + e.message); }
+    }
+
+    async function toggleExternalSource(id, enabled) {
+      try {
+        const res = await api("/api/external-sources/toggle", { method: "POST", body: JSON.stringify({ id, enabled }) });
+        renderExternalSources(res.sources || []);
+        toast(enabled ? "已启用并同步外部知识源" : "已停用并清理该源索引");
+      } catch (e) { toast("操作失败: " + e.message); }
+    }
+
+    async function removeExternalSource(id) {
+      const ok = await azureConfirm({ title: "移除外部知识源", message: "仅移除该目录的只读索引绑定，绝不删除磁盘上的任何原文件。", okText: "确认移除", danger: true });
+      if (!ok) return;
+      try {
+        const res = await api("/api/external-sources/remove", { method: "POST", body: JSON.stringify({ id }) });
+        renderExternalSources(res.sources || []);
+        toast("已移除外部知识源");
+      } catch (e) { toast("移除失败: " + e.message); }
+    }
+
+    async function loadBriefing(project) {
+      const qs = project ? "?project=" + encodeURIComponent(project) : "";
+      const data = await api("/api/briefing" + qs);
+      const sel = document.getElementById("briefing-proj");
+      const projects = data.projects || [];
+      if (sel) {
+        if (!projects.length) {
+          sel.innerHTML = '<option value="">暂无项目</option>';
+        } else {
+          const cur = data.briefing?.project || projects[0].project;
+          sel.innerHTML = projects.map((p) => `<option value="${esc(p.project)}" ${p.project === cur ? "selected" : ""}>${esc(p.project)} (${p.count})</option>`).join("");
+        }
+      }
+      const pre = document.getElementById("briefing-preview");
+      if (pre) {
+        pre.textContent = data.briefing?.text || "暂无可聚合的项目记忆（写入带 project 标签的记忆后自动生成）。";
+      }
+    }
+
+    async function copyBriefing() {
+      const txt = document.getElementById("briefing-preview")?.textContent || "";
+      if (!txt) return;
+      try { await navigator.clipboard.writeText(txt); toast("已复制项目活地图"); } catch { toast("复制失败"); }
+    }
+
+    async function loadMcpShare() {
+      mcpShareCache = await api("/api/mcp-share-config");
+      renderMcpShare();
+    }
+
+    function renderMcpShare() {
+      const pre = document.getElementById("mcp-share-preview");
+      if (!pre || !mcpShareCache) return;
+      const fmt = document.getElementById("mcp-share-fmt")?.value || "json";
+      pre.textContent = fmt === "claude" ? mcpShareCache.claudeCli : mcpShareCache.standardJson;
+    }
+
+    async function copyMcpShare() {
+      const txt = document.getElementById("mcp-share-preview")?.textContent || "";
+      if (!txt) return;
+      try { await navigator.clipboard.writeText(txt); toast("已复制跨工具 MCP 挂载配置"); } catch { toast("复制失败"); }
     }
 
     function renderMaint(elId, items, kind) {
@@ -1490,7 +1677,64 @@
       const outStr = (detailNode.outgoing || []).map((e) => `→ ${e.relation} → ${e.target_id}`).join("；");
       const inStr = (detailNode.incoming || []).map((e) => `← ${e.relation} ← ${e.source_id}`).join("；");
       document.getElementById("d-edges").textContent = [outStr, inStr].filter(Boolean).join(" | ") || "暂无图谱连边";
+
+      const srcRow = document.getElementById("d-source-row");
+      const srcRef = detailNode.source_ref || detailNode.session_id || "";
+      if (srcRow) {
+        if (srcRef) {
+          document.getElementById("d-source-text").textContent = "🔗 原话溯源：" + srcRef;
+          srcRow.classList.remove("hidden");
+        } else {
+          srcRow.classList.add("hidden");
+        }
+      }
+
+      const rbBtn = document.getElementById("d-rollback-btn");
+      const bakCount = Array.isArray(detailNode.backups) ? detailNode.backups.length : 0;
+      if (rbBtn) {
+        if (bakCount > 0) {
+          rbBtn.textContent = `⏪ 回滚上一版 (${bakCount})`;
+          rbBtn.classList.remove("hidden");
+        } else {
+          rbBtn.classList.add("hidden");
+        }
+      }
+
       document.getElementById("detail-modal").classList.remove("hidden");
+    }
+
+    async function copyDetailSource() {
+      if (!detailNode) return;
+      const raw = detailNode.source_ref || detailNode.session_id || "";
+      const convId = raw.split("#")[0];
+      if (!convId) return;
+      try {
+        await navigator.clipboard.writeText(convId);
+        toast("已复制会话 ID（可在苍蓝回廊直接检索跳转）");
+      } catch {
+        toast("复制失败");
+      }
+    }
+
+    async function rollbackDetail() {
+      if (!detailNode) return;
+      const latest = detailNode.backups?.[0];
+      const ok = await azureConfirm({
+        title: "回滚到上一版快照",
+        message: `确认将节点「${detailNode.title || detailNode.id}」恢复到改写前的 .bak 快照？`,
+        note: latest ? `快照文件：${latest.file}（当前内容也会先自动备份，可随时再切回）` : "",
+        okText: "确认回滚",
+        danger: false,
+      });
+      if (!ok) return;
+      try {
+        await api("/api/rollback", { method: "POST", body: JSON.stringify({ id: detailNode.id }) });
+        toast("已回滚到上一版快照");
+        await openDetail(detailNode.id);
+        await refreshAll();
+      } catch (e) {
+        toast("回滚失败: " + e.message);
+      }
     }
     function closeDetailModal() { document.getElementById("detail-modal").classList.add("hidden"); }
 

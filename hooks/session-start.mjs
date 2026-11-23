@@ -1,4 +1,13 @@
+import path from "node:path";
 import { LanxiEngine } from "../lib/engine.mjs";
+
+function extractProjectName(input) {
+  const raw = (Array.isArray(input?.workspacePaths) && input.workspacePaths[0]) || input?.cwd || "";
+  const trimmed = String(raw || "").trim().replace(/[\\/]+$/, "");
+  if (!trimmed || /^[A-Za-z]:$/.test(trimmed)) return "";
+  const base = path.basename(trimmed);
+  return base.length >= 2 ? base : "";
+}
 
 async function readStdin() {
   const chunks = [];
@@ -6,13 +15,14 @@ async function readStdin() {
   return Buffer.concat(chunks).toString("utf8").trim();
 }
 
-function main() {
+function main(input = {}) {
   const engine = new LanxiEngine();
   try {
     const cfg = engine.loadConfig();
     if (cfg.autoSessionStart === false) return {};
 
     const overview = engine.getOverview();
+    const project = extractProjectName(input);
     const identityRows = engine.recall({
       query: "",
       layers: ["anchor", "self"],
@@ -23,6 +33,13 @@ function main() {
 
     const lines = [];
     lines.push(`[蓝汐 · 认知图谱已就绪] 活跃节点 ${overview.totalNodes} 个（硬保护 ${overview.protectedCount}，图谱边 ${overview.edgesCount}）。`);
+
+    if (cfg.projectBriefing !== false && project) {
+      const briefing = engine.buildProjectBriefing(project, { maxChars: 850 });
+      if (briefing.nodeCount > 0 && briefing.text) {
+        lines.push(briefing.text);
+      }
+    }
 
     if (identityRows.length > 0) {
       lines.push("【身份与自我锚点】");
@@ -57,8 +74,9 @@ function main() {
 }
 
 try {
-  await readStdin();
-  const out = main();
+  const raw = await readStdin();
+  const input = raw ? JSON.parse(raw) : {};
+  const out = main(input);
   process.stdout.write(JSON.stringify(out) + "\n");
 } catch {
   process.stdout.write("{}\n");

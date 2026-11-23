@@ -275,6 +275,74 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      if (req.method === "POST" && pathname === "/api/rollback") {
+        const body = await readBody(req);
+        sendJson(res, 200, engine.rollbackMemory(body.id, body.backupFile || null));
+        return;
+      }
+
+      if (req.method === "GET" && pathname === "/api/briefing") {
+        const proj = url.searchParams.get("project") || "";
+        const projects = engine.listProjects();
+        const targetProj = proj || (projects[0]?.project || "");
+        const briefing = targetProj ? engine.buildProjectBriefing(targetProj, { maxChars: 1200 }) : { project: "", nodeCount: 0, text: "", sections: {} };
+        sendJson(res, 200, { projects, briefing });
+        return;
+      }
+
+      if (req.method === "GET" && pathname === "/api/external-sources") {
+        sendJson(res, 200, { sources: engine.listExternalSources() });
+        return;
+      }
+
+      if (req.method === "POST" && pathname === "/api/external-sources/add") {
+        const body = await readBody(req);
+        sendJson(res, 200, engine.addExternalSource(body));
+        return;
+      }
+
+      if (req.method === "POST" && pathname === "/api/external-sources/toggle") {
+        const body = await readBody(req);
+        sendJson(res, 200, { sources: engine.toggleExternalSource(body.id, body.enabled) });
+        return;
+      }
+
+      if (req.method === "POST" && pathname === "/api/external-sources/remove") {
+        const body = await readBody(req);
+        sendJson(res, 200, { sources: engine.removeExternalSource(body.id) });
+        return;
+      }
+
+      if (req.method === "POST" && pathname === "/api/external-sources/sync") {
+        const body = await readBody(req);
+        const result = engine.syncExternalSources({ sourceId: body.id || null, force: Boolean(body.force) });
+        sendJson(res, 200, { result, sources: engine.listExternalSources() });
+        return;
+      }
+
+      if (req.method === "GET" && pathname === "/api/mcp-share-config") {
+        const mcpEntry = path.resolve(__dirname, "..", "..", "mcp-server.mjs");
+        const dataDir = engine.dataDir;
+        const standardJson = JSON.stringify(
+          {
+            mcpServers: {
+              "lanxi-memory": {
+                command: "node",
+                args: [mcpEntry],
+                env: {
+                  LANXI_DATA_DIR: dataDir,
+                },
+              },
+            },
+          },
+          null,
+          2
+        );
+        const claudeCli = `claude mcp add lanxi-memory -e LANXI_DATA_DIR="${dataDir}" -- node "${mcpEntry}"`;
+        sendJson(res, 200, { mcpEntry, dataDir, standardJson, claudeCli });
+        return;
+      }
+
       sendJson(res, 404, { error: "API route not found" });
     } catch (err) {
       sendJson(res, 400, { error: err.message || String(err) });

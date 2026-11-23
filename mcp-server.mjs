@@ -155,16 +155,20 @@ const TOOLS = [
   },
   {
     name: "cg_maintain",
-    description: "潮汐维护：查看维护队列（queue），晋升情景（promote），强化访问（touch），批量修改/确认重要度（set_importance），手动或 AI 智能凝结（consolidate / ai_consolidate），补全向量（backfill_embeddings），或重建索引（rebuild）。",
+    description: "潮汐维护：查看维护队列（queue），晋升情景（promote），强化访问（touch），批量修改/确认重要度（set_importance），手动或 AI 智能凝结（consolidate / ai_consolidate），补全向量（backfill_embeddings），生成项目活地图（briefing），回滚节点快照（rollback），增量同步外部知识目录（sync_sources），或重建索引（rebuild）。",
     inputSchema: {
       type: "object",
       properties: {
         op: {
           type: "string",
-          enum: ["queue", "promote", "touch", "set_importance", "consolidate", "ai_consolidate", "backfill_embeddings", "rebuild"],
+          enum: ["queue", "promote", "touch", "set_importance", "consolidate", "ai_consolidate", "backfill_embeddings", "briefing", "rollback", "sync_sources", "rebuild"],
           description: "默认 queue"
         },
-        id: { type: "string", description: "promote/touch/set_importance 时的目标节点 ID" },
+        id: { type: "string", description: "promote/touch/set_importance/rollback 时的目标节点 ID" },
+        backupFile: { type: "string", description: "rollback 时可选指定 .bak.md 快照文件名，默认回滚最新一份" },
+        project: { type: "string", description: "briefing 时指定的项目名" },
+        sourceId: { type: "string", description: "sync_sources 时可选指定单个外部源 ID" },
+        force: { type: "boolean", description: "sync_sources 时是否强制全量重切" },
         ids: { type: "array", items: { type: "string" }, description: "set_importance 批量目标节点 ID 列表" },
         importance: { type: "number", description: "set_importance 要设置的重要度 0~1" },
         confirm: { type: "boolean", description: "set_importance 时是否同时确认保护（将 hint 转为 confirmed）" },
@@ -203,8 +207,8 @@ async function dispatchTool(name, args = {}) {
   switch (name) {
     case "cg_write":
       return engine.writeMemory(args);
-    case "cg_recall":
-      return await engine.recallHybrid({
+    case "cg_recall": {
+      const memories = await engine.recallHybrid({
         query: args.query,
         layers: args.layers,
         project: args.project,
@@ -213,6 +217,14 @@ async function dispatchTool(name, args = {}) {
         includeExpired: Boolean(args.includeExpired),
         touch: true,
       });
+      const externalHits = args.query
+        ? engine.searchExternalKnowledge(args.query, { project: args.project || "", limit: 3 })
+        : [];
+      if (externalHits.length > 0) {
+        return { memories, externalHits };
+      }
+      return memories;
+    }
     case "cg_read": {
       const node = engine.readMemory(args.id);
       if (!node) throw new Error(`未找到记忆节点: ${args.id}`);
@@ -242,6 +254,9 @@ async function dispatchTool(name, args = {}) {
       if (op === "consolidate") return engine.consolidateCluster(args);
       if (op === "ai_consolidate") return await engine.aiConsolidateCluster(args);
       if (op === "backfill_embeddings") return await engine.backfillEmbeddings(args.limit ?? 50);
+      if (op === "briefing") return engine.buildProjectBriefing(args.project || "", { maxChars: args.maxChars || 900 });
+      if (op === "rollback") return engine.rollbackMemory(args.id, args.backupFile || null);
+      if (op === "sync_sources") return engine.syncExternalSources({ sourceId: args.sourceId || null, force: Boolean(args.force) });
       if (op === "rebuild") return engine.rebuildIndex();
       throw new Error(`未知维护操作: ${op}`);
     }
