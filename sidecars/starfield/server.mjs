@@ -4,6 +4,7 @@ import { handleAzureThemeHttp } from "../../lib/azure-theme.mjs";
 import { injectAzureUiKit } from "../../lib/azure-ui-kit.mjs";
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import http from "node:http";
 import { fileURLToPath } from "node:url";
 import { LanxiEngine } from "../../lib/engine.mjs";
@@ -255,6 +256,52 @@ const server = http.createServer(async (req, res) => {
         if (!body.ai?.llmApiKey || isMaskedPlaceholder(body.ai.llmApiKey)) mergedAi.llmApiKey = cfg.ai?.llmApiKey;
         if (!body.ai?.embeddingApiKey || isMaskedPlaceholder(body.ai.embeddingApiKey)) mergedAi.embeddingApiKey = cfg.ai?.embeddingApiKey;
         sendJson(res, 200, await testAiConnection(mergedAi));
+        return;
+      }
+
+      if (req.method === "POST" && pathname === "/api/ai/import-orchestrator") {
+        const orchPath = path.join(os.homedir(), ".gemini", "external-orchestrator", "config.json");
+        if (!fs.existsSync(orchPath)) {
+          sendJson(res, 404, { error: "未检测到苍蓝协奏台配置文件（~/.gemini/external-orchestrator/config.json）" });
+          return;
+        }
+        const orch = JSON.parse(fs.readFileSync(orchPath, "utf8"));
+        const providers = Array.isArray(orch.providers) ? orch.providers.filter((p) => p && p.enabled !== false && p.baseUrl) : [];
+        if (!providers.length) {
+          sendJson(res, 400, { error: "苍蓝协奏台暂无已启用的外部模型渠道" });
+          return;
+        }
+        const routing = orch.routing || {};
+        const pickRef = routing.fast?.primary || routing.default?.primary || "";
+        let pickedProvider = null;
+        let pickedModel = "";
+        if (pickRef && pickRef.includes(":")) {
+          const [pid, ...rest] = pickRef.split(":");
+          const found = providers.find((p) => p.id === pid);
+          if (found) {
+            pickedProvider = found;
+            pickedModel = rest.join(":");
+          }
+        }
+        if (!pickedProvider) {
+          pickedProvider = providers[0];
+          pickedModel = pickedProvider.defaultModel || (Array.isArray(pickedProvider.models) ? pickedProvider.models[0] : "") || "gpt-4o-mini";
+        }
+        engine.updateSettings({
+          ai: {
+            llmEnabled: true,
+            llmBaseUrl: pickedProvider.baseUrl,
+            llmModel: pickedModel,
+            ...(pickedProvider.apiKey ? { llmApiKey: pickedProvider.apiKey } : {}),
+          },
+        });
+        sendJson(res, 200, {
+          ok: true,
+          providerName: pickedProvider.name || pickedProvider.id,
+          baseUrl: pickedProvider.baseUrl,
+          model: pickedModel,
+          config: engine.getPublicConfig(),
+        });
         return;
       }
 
