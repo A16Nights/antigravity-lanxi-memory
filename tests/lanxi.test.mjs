@@ -473,3 +473,135 @@ test("0.11 upgrades: default episodic layer, dataStale detection, writeGate & se
     fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 6, retryDelay: 100 });
   }
 });
+
+test("Lightweight conflict alerts, evidence_files freshness, and derived_from provenance", async () => {
+  const { applyKnowledgeAuditDecision } = await import("../lib/organizer.mjs");
+  const { filterRecallResults } = await import("../lib/recall-filter.mjs");
+
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "lanxi-ev-"));
+  const evFile = path.join(tmpDir, "target-code.js");
+  fs.writeFileSync(evFile, "export const PORT = 8080;\n", "utf8");
+  let engine;
+  try {
+    engine = new LanxiEngine(tmpDir);
+
+    // 1. Clean node with unchanged evidence file should have no alerts
+    const nEv = engine.writeMemory({
+      layer: "knowledge",
+      title: "网关监听端口说明",
+      content: "网关默认监听 8080 端口，配置在 target-code.js。",
+      importance: 0.75,
+      confirmedBy: "user",
+      evidence_files: [evFile],
+    });
+    const cleanHit = engine.recall({ query: "网关监听端口", limit: 5, touch: false }).find((x) => x.id === nEv.id);
+    assert.ok(cleanHit);
+    assert.equal(cleanHit.alerts, undefined);
+    assert.equal(cleanHit.evidence_files.length, 1);
+
+    // 2. Modifying evidence file triggers modified alert
+    fs.writeFileSync(evFile, "export const PORT = 9090;\nexport const TLS = true;\n", "utf8");
+    const modHit = engine.recall({ query: "网关监听端口", limit: 5, touch: false }).find((x) => x.id === nEv.id);
+    assert.ok(modHit.alerts && modHit.alerts.some((a) => a.includes("target-code.js(modified)")));
+    assert.equal(modHit.evidenceStatus.modifiedCount, 1);
+
+    // 3. Deleting evidence file triggers deleted alert & filterRecallResults preserves alerts
+    fs.unlinkSync(evFile);
+    const delRead = engine.readMemory(nEv.id);
+    assert.ok(delRead.alerts && delRead.alerts.some((a) => a.includes("target-code.js(deleted)")));
+    const filtered = filterRecallResults(engine.recall({ query: "网关监听端口", limit: 5, touch: false }), { minScore: 0 });
+    assert.ok(filtered[0].alerts && filtered[0].alerts.some((a) => a.includes("target-code.js(deleted)")));
+
+    // 4. Doubted state + contradicts edge + supersedes edge alerts
+    const nOld = engine.writeMemory({
+      layer: "knowledge",
+      title: "缓存策略旧方案",
+      content: "缓存策略使用本地内存 Map 缓存。",
+      importance: 0.7,
+      confirmedBy: "user",
+      verification_state: "doubted",
+    });
+    const nContra = engine.writeMemory({
+      layer: "knowledge",
+      title: "缓存策略冲突方案",
+      content: "缓存策略必须禁用内存缓存改用 SQLite。",
+      importance: 0.75,
+      confirmedBy: "user",
+    });
+    const nNew = engine.writeMemory({
+      layer: "knowledge",
+      title: "缓存策略最终方案",
+      content: "缓存策略最终确定为 SQLite WAL + 分级缓存。",
+      importance: 0.8,
+      confirmedBy: "user",
+    });
+    engine.linkMemories(nOld.id, nContra.id, "contradicts");
+    engine.linkMemories(nNew.id, nOld.id, "supersedes");
+
+    const oldRecalled = (await engine.recallHybrid({ query: "缓存策略", limit: 10, touch: false })).find((x) => x.id === nOld.id);
+    assert.ok(oldRecalled.alerts.some((a) => a.includes("存疑状态")));
+    assert.ok(oldRecalled.alerts.some((a) => a.includes("存在冲突记忆") && a.includes(nContra.id)));
+    assert.ok(oldRecalled.alerts.some((a) => a.includes("已被新记忆取代") && a.includes(nNew.id)));
+
+    // Archiving conflicting counterpart stops reporting stale conflict alert
+    engine.forgetMemory(nContra.id, { reason: "resolved", override: true });
+    const afterArchive = engine.readMemory(nOld.id);
+    assert.ok(!afterArchive.alerts.some((a) => a.includes(nContra.id)));
+
+    // 5. Consolidation & merge audit inherit evidence_files and record derived_from; rebuild preserves both
+    const evFile2 = path.join(tmpDir, "second-ref.js");
+    fs.writeFileSync(evFile2, "export const V = 2;\n", "utf8");
+    const ep1 = engine.writeMemory({
+      layer: "episodic",
+      title: "情景线索一",
+      content: "记录 second-ref.js 初始实现。",
+      evidence_files: [evFile2],
+    });
+    const cons = engine.consolidateCluster({
+      sourceIds: [ep1.id],
+      title: "凝结后知识",
+      summary: "汇总 second-ref.js 的长期实现约定。",
+      targetLayer: "knowledge",
+    });
+    assert.deepEqual(cons.derived_from, [ep1.id]);
+    assert.equal(cons.evidence_files.length, 1);
+
+    const dupNode = engine.writeMemory({
+      layer: "knowledge",
+      title: "补充知识节点",
+      content: "补充说明细节。",
+      evidence_files: [evFile],
+    });
+    applyKnowledgeAuditDecision(engine, {
+      status: "merge",
+      keepId: cons.id,
+      archiveIds: [dupNode.id],
+      mergedTitle: "合并后完整知识",
+      mergedSummary: "整合两条关于 second-ref.js 的知识。",
+    });
+    const mergedRead = engine.readMemory(cons.id);
+    assert.ok(mergedRead.derived_from.includes(ep1.id) && mergedRead.derived_from.includes(dupNode.id));
+    assert.equal(mergedRead.evidence_files.length, 2);
+
+    // Rebuild index round-trip preserves evidence_files and derived_from
+    engine.rebuildIndex();
+    const afterRebuild = engine.readMemory(cons.id);
+    assert.ok(afterRebuild.derived_from.includes(ep1.id) && afterRebuild.derived_from.includes(dupNode.id));
+    assert.equal(afterRebuild.evidence_files.length, 2);
+
+    // 6. Unresolved items must NOT inflate maintenanceCount badge (shown in Anchors / Stream instead)
+    engine.writeMemory({
+      layer: "unresolved",
+      title: "待确认的协议细节",
+      content: "需要后续确认该字段的边界表现。",
+    });
+    const mq = engine.getMaintenanceQueue();
+    const ov = engine.getOverview();
+    assert.equal(mq.unresolved.length, 1);
+    assert.equal(mq.totalCount, mq.toPromote.length + mq.decaying.length);
+    assert.equal(ov.maintenanceCount, mq.totalCount);
+  } finally {
+    try { engine?.close(); } catch {}
+    fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 6, retryDelay: 100 });
+  }
+});

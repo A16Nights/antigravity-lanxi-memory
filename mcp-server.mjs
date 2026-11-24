@@ -28,6 +28,9 @@ const TOOLS = [
         rejection_reason: { type: "string", description: "可选：被否决/弃用方案的原因说明" },
         tags: { type: "array", items: { type: "string" }, description: "标签数组" },
         aliases: { type: "array", items: { type: "string" }, description: "别名数组" },
+        evidence_files: { type: "array", items: { type: "string" }, description: "可选：关联的本地证据文件路径数组（自动记录当前 mtime/size，后续文件变更或删除时召回自动预警）" },
+        derived_from: { type: "array", items: { type: "string" }, description: "可选：来源/前身记忆节点 ID 数组" },
+        verification_state: { type: "string", enum: ["verified", "unverified", "doubted"], description: "可选：验证状态（doubted 会在召回时触发核实提醒）" },
         valid_until: { type: "number", description: "可选过期 Unix 秒时间戳" },
         protected: { type: "boolean", description: "是否强制启用防衰减硬保护" }
       }
@@ -78,6 +81,9 @@ const TOOLS = [
         rejection_reason: { type: "string" },
         tags: { type: "array", items: { type: "string" } },
         aliases: { type: "array", items: { type: "string" } },
+        evidence_files: { type: "array", items: { type: "string" }, description: "关联的本地证据文件路径数组（传空数组清除）" },
+        derived_from: { type: "array", items: { type: "string" }, description: "来源/前身记忆节点 ID 数组（传空数组清除）" },
+        verification_state: { type: "string", enum: ["verified", "unverified", "doubted"], description: "显式更新验证状态（如标为 doubted 或 verified）" },
         protected: { type: "boolean" },
         override: { type: "boolean", description: "解除/降低硬保护或降级受保护层时必须为 true" }
       }
@@ -105,7 +111,7 @@ const TOOLS = [
       properties: {
         sourceId: { type: "string", description: "源节点 ID" },
         targetId: { type: "string", description: "目标节点 ID" },
-        relation: { type: "string", description: "关系类型，如 related_to、supports、derived_from、depends_on" },
+        relation: { type: "string", description: "关系类型，如 related_to、supports、derived_from、depends_on、contradicts（冲突标注，召回时预警）、supersedes（新记忆取代旧记忆）" },
         weight: { type: "number", description: "边权重，默认 1.0" }
       }
     }
@@ -329,7 +335,7 @@ async function handleLine(line) {
         sendResponse(id, {
           protocolVersion: params?.protocolVersion || "2024-11-05",
           capabilities: { tools: {}, resources: {} },
-          serverInfo: { name: "lingshu-cortex", version: "1.3.1" },
+          serverInfo: { name: "lingshu-cortex", version: "1.4.4" },
         });
         break;
       case "ping":

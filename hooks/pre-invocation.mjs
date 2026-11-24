@@ -70,7 +70,8 @@ function buildAutoRecallBlock(engine, cfg, userText, project) {
 
   const lines = ["【蓝汐自动召回（参考记忆，仅标题+摘要；需要全文请按 id 调用 cg_read）】"];
   for (const item of kept) {
-    lines.push(`- [${item.layer}|id:${item.id}] ${item.title}: ${item.preview}`);
+    const alertTag = Array.isArray(item.alerts) && item.alerts.length > 0 ? ` [⚠️ ${item.alerts[0]}]` : "";
+    lines.push(`- [${item.layer}|id:${item.id}] ${item.title}: ${item.preview}${alertTag}`);
   }
   for (const ext of extHits) {
     lines.push(`- [ext:${ext.source_label}|${ext.rel_path}] ${ext.title}: ${ext.preview}`);

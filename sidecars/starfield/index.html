@@ -470,7 +470,31 @@
       background: var(--card-2);
       border: 1px solid var(--border);
     }
-    .horizon-seg { height: 100%; transition: width 0.35s ease; }
+    .horizon-seg { height: 100%; cursor: pointer; transition: width 0.35s ease, filter 0.18s ease; }
+    .horizon-seg:hover { filter: brightness(1.2); }
+    .horizon-legend-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      margin: 0;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-size: 11.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.15s ease;
+    }
+    .horizon-legend-btn:hover {
+      background: var(--card-2);
+      border-color: var(--border-strong, var(--border));
+      color: var(--text);
+      transform: translateY(-1px);
+    }
+    .horizon-legend-btn .hl-arrow { opacity: 0.45; font-size: 10px; transition: opacity 0.18s ease, transform 0.18s ease; }
+    .horizon-legend-btn:hover .hl-arrow { opacity: 0.95; transform: translate(1px, -1px); }
     .tide-mini-track {
       height: 4px;
       width: 72px;
@@ -747,7 +771,7 @@
           <span class="muted" id="horizon-summary">--</span>
         </div>
         <div class="horizon-bar" id="horizon-bar"></div>
-        <div class="row between muted" id="horizon-legend" style="font-size:11.5px;"></div>
+        <div class="row between muted" id="horizon-legend" style="font-size:11.5px;flex-wrap:wrap;gap:4px;"></div>
       </div>
 
       <div class="two-col">
@@ -1483,20 +1507,63 @@
       loadOrganizeStatus().catch(() => {});
     }
 
+    function jumpFromHorizon(kind) {
+      if (kind === "anchor") {
+        switchView("anchors");
+        return;
+      }
+      if (kind === "rising") {
+        const qEl = document.getElementById("stream-q");
+        const sortEl = document.getElementById("stream-sort");
+        if (qEl) qEl.value = "";
+        if (sortEl) sortEl.value = "access";
+        layerFilter = "";
+        archiveSelectedIds.clear();
+        document.querySelectorAll("#layer-pills .pill-filter").forEach((b) => b.classList.toggle("active", b.dataset.layer === ""));
+        switchView("stream");
+        return;
+      }
+      if (kind === "fading") {
+        switchView("maintain");
+        setTimeout(() => {
+          const decayEl = document.getElementById("maint-decay");
+          const card = decayEl?.closest(".card");
+          if (card) {
+            card.scrollIntoView({ behavior: "smooth", block: "center" });
+            card.style.transition = "border-color 0.25s ease, box-shadow 0.25s ease";
+            card.style.borderColor = "var(--amber)";
+            card.style.boxShadow = "0 0 0 2px rgba(251, 191, 36, 0.22)";
+            setTimeout(() => { card.style.borderColor = ""; card.style.boxShadow = ""; }, 1400);
+          }
+        }, 120);
+        return;
+      }
+      if (kind === "unresolved") {
+        const qEl = document.getElementById("stream-q");
+        const sortEl = document.getElementById("stream-sort");
+        if (qEl) qEl.value = "";
+        if (sortEl) sortEl.value = "recent";
+        layerFilter = "unresolved";
+        archiveSelectedIds.clear();
+        document.querySelectorAll("#layer-pills .pill-filter").forEach((b) => b.classList.toggle("active", b.dataset.layer === "unresolved"));
+        switchView("stream");
+      }
+    }
+
     function renderHorizon(tb, total) {
       const sum = Math.max(1, total || (tb.anchor + tb.rising + tb.fading + tb.unresolved));
       const segs = [
-        { key: "定海锚点", val: tb.anchor || 0, color: "#818cf8" },
-        { key: "涨潮活跃", val: tb.rising || 0, color: "#38bdf8" },
-        { key: "退潮待凝结", val: tb.fading || 0, color: "#fbbf24" },
-        { key: "待解决", val: tb.unresolved || 0, color: "#fb7185" },
+        { id: "anchor", key: "定海锚点", val: tb.anchor || 0, color: "#818cf8", hint: "点击前往「锚点与目标」" },
+        { id: "rising", key: "涨潮活跃", val: tb.rising || 0, color: "#38bdf8", hint: "点击前往「记忆流」按涨潮活跃度查看" },
+        { id: "fading", key: "退潮待凝结", val: tb.fading || 0, color: "#fbbf24", hint: "点击前往「潮汐维护」查看退潮老化节点" },
+        { id: "unresolved", key: "待解决", val: tb.unresolved || 0, color: "#fb7185", hint: "点击前往「记忆流」筛选 unresolved 待解决节点" },
       ];
       document.getElementById("horizon-bar").innerHTML = segs
-        .map((s) => `<div class="horizon-seg" style="width:${(s.val / sum) * 100}%;background:${s.color};" title="${s.key}: ${s.val}"></div>`)
+        .map((s) => `<div class="horizon-seg" style="width:${(s.val / sum) * 100}%;background:${s.color};" title="${s.key}: ${s.val}（${s.hint}）" onclick="jumpFromHorizon('${s.id}')"></div>`)
         .join("");
       document.getElementById("horizon-summary").textContent = `总计 ${total} 节点`;
       document.getElementById("horizon-legend").innerHTML = segs
-        .map((s) => `<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.color};margin-right:4px;"></span>${s.key} ${s.val}</span>`)
+        .map((s) => `<button type="button" class="horizon-legend-btn" title="${s.hint}" onclick="jumpFromHorizon('${s.id}')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.color};flex-shrink:0;"></span><span>${s.key} ${s.val}</span><span class="hl-arrow">↗</span></button>`)
         .join("");
     }
 
