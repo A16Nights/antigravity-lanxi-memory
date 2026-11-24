@@ -407,7 +407,7 @@ const server = http.createServer(async (req, res) => {
                 jobId,
                 maxClusters: body.maxClusters ?? 12,
                 project: body.project || "",
-                dryRun: body.dryRun !== false,
+                dryRun: Boolean(body.dryRun),
               },
               runnerCallbacks
             )

@@ -484,6 +484,32 @@
       color: var(--cyan);
       border-color: var(--cyan);
     }
+    button.org-mode-tab {
+      position: relative;
+      padding: 7px 14px !important;
+      border-radius: 999px !important;
+      font-size: 12.5px !important;
+      font-weight: 500;
+      background: rgba(15, 23, 42, 0.55) !important;
+      border: 1px solid rgba(148, 163, 184, 0.25) !important;
+      color: var(--muted) !important;
+      opacity: 0.72;
+      transition: all 0.18s ease;
+    }
+    button.org-mode-tab:hover {
+      opacity: 0.96;
+      border-color: rgba(56, 189, 248, 0.55) !important;
+      color: #e2e8f0 !important;
+    }
+    button.org-mode-tab.active {
+      opacity: 1 !important;
+      background: var(--neko-grad, linear-gradient(135deg, #2563eb 0%, #3b82f6 58%, #7c3aed 100%)) !important;
+      border-color: rgba(125, 211, 252, 0.9) !important;
+      color: #ffffff !important;
+      font-weight: 600 !important;
+      box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.35), 0 6px 18px rgba(59, 130, 246, 0.38) !important;
+    }
+    #detail-modal { z-index: 1050; }
     .kv-row {
       display: flex;
       align-items: center;
@@ -556,20 +582,33 @@
     .hidden { display: none !important; }
     .toast {
       position: fixed;
-      bottom: 16px;
-      right: 16px;
-      background: var(--card-2);
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: rgba(12, 22, 42, 0.96);
+      backdrop-filter: blur(12px);
       border: 1px solid var(--cyan);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), 0 0 18px rgba(56, 189, 248, 0.25);
       color: var(--text);
-      padding: 8px 14px;
-      border-radius: 9px;
-      font-size: 12px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.2s;
-      z-index: 80;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      z-index: 1200;
+      max-width: min(520px, calc(100vw - 32px));
+      text-align: center;
     }
-    .toast.show { opacity: 1; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .btn-needs-sel { opacity: 0.62; }
+    .btn-needs-sel:hover { opacity: 0.92; }
+    @keyframes cardFlash {
+      0%, 100% { box-shadow: none; }
+      35% { box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.75), 0 0 22px rgba(56, 189, 248, 0.28); }
+    }
+    .card-flash { animation: cardFlash 1.2s ease; }
     code.path {
       background: var(--bg);
       padding: 3px 7px;
@@ -779,8 +818,8 @@
             <button class="sm primary" id="btn-instant-organize" onclick="openOrganizeModal(false, 'episodic')">🚀 手动即时整理 <span id="pending-epi-badge" style="opacity:0.85;"></span></button>
             <button class="sm" id="btn-audit-knowledge" onclick="openOrganizeModal(false, 'audit')">🩺 体检过时知识 <span id="active-know-badge" style="opacity:0.8;"></span></button>
             <button class="sm" id="btn-open-org-monitor" onclick="openOrganizeModal(true)">📺 观察整理过程</button>
-            <button class="sm ai-btn" onclick="runAiConsolidatePreview()">✨ AI 凝结已选</button>
-            <button class="sm" onclick="openManualConsolidate()">手动合并已选</button>
+            <button class="sm ai-btn btn-needs-sel" id="btn-ai-consolidate" title="请先在下方勾选至少 1 条情景节点" onclick="runAiConsolidatePreview()">✨ AI 凝结已选</button>
+            <button class="sm btn-needs-sel" id="btn-manual-consolidate" title="请先在下方勾选至少 1 条情景节点" onclick="openManualConsolidate()">手动合并已选</button>
           </div>
         </div>
       </div>
@@ -796,7 +835,7 @@
         </div>
       </div>
 
-      <div class="card stack">
+      <div class="card stack" id="maint-recent-card">
         <div class="row between" style="flex-wrap:wrap;gap:6px;">
           <div>
             <span class="title-sm">📝 近期未整理情景（可直接勾选凝结）</span>
@@ -1138,9 +1177,9 @@
       </div>
 
       <!-- Mode Switcher -->
-      <div class="row" style="gap:6px;">
-        <button id="org-tab-episodic" class="pill-filter active" onclick="setOrganizeTaskType('episodic')">✨ 整理零散情景（自动查旧合并/取代）</button>
-        <button id="org-tab-audit" class="pill-filter" onclick="setOrganizeTaskType('audit')">🩺 体检过时知识（知识库去重与淘汰）</button>
+      <div class="row" style="gap:8px;flex-wrap:wrap;">
+        <button id="org-tab-episodic" class="pill-filter org-mode-tab active" onclick="setOrganizeTaskType('episodic')">✨ 整理零散情景（自动查旧合并/取代）</button>
+        <button id="org-tab-audit" class="pill-filter org-mode-tab" onclick="setOrganizeTaskType('audit')">🩺 体检过时知识（知识库去重与淘汰）</button>
       </div>
 
       <!-- Run controls -->
@@ -1195,9 +1234,9 @@
               <option value="0">全部相似组</option>
             </select>
           </label>
-          <label class="row" style="gap:4px;font-size:12px;cursor:pointer;" title="勾选后只输出体检报告，在右侧逐条点「采纳」再修改；取消则自动合并并软归档过时知识（均保留.bak可恢复）">
-            <input type="checkbox" id="org-audit-dry-run" checked style="width:auto;" />
-            <span>仅生成体检建议（右侧逐条采纳）</span>
+          <label class="row" style="gap:4px;font-size:12px;cursor:pointer;" title="默认关闭即自动采纳落地（自动保留.bak快照且软归档随时可恢复）；勾选后则仅生成体检建议，在右侧逐条或一键采纳">
+            <input type="checkbox" id="org-audit-dry-run" style="width:auto;" />
+            <span>仅生成体检建议（关闭则自动采纳）</span>
           </label>
         </div>
 
@@ -1240,9 +1279,13 @@
           </div>
         </div>
         <div class="stack" style="gap:6px;">
-          <div class="row between">
+          <div class="row between" style="flex-wrap:wrap;gap:6px;">
             <span class="title-sm" style="font-size:12.5px;">✨ 实时凝结产出（点击查看详情）</span>
-            <span class="muted" id="org-res-count" style="font-size:11px;">0 项</span>
+            <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center;">
+              <span class="muted" id="org-audit-progress" style="font-size:11.5px;display:none;"></span>
+              <button id="org-apply-all-btn" class="sm primary hidden" onclick="applyAllAuditCards()">✅ 全部采纳</button>
+              <span class="muted" id="org-res-count" style="font-size:11px;">0 项</span>
+            </div>
           </div>
           <div id="org-results-box" class="org-results-box">
             <div class="muted" style="padding:10px;">每完成一组提炼，新生成的长期知识卡片会立即显示在这里。</div>
@@ -2336,6 +2379,30 @@
 
       const results = job.results || [];
       if (resCount) resCount.textContent = `${results.length} 项`;
+      const auditProg = document.getElementById("org-audit-progress");
+      const applyAllBtn = document.getElementById("org-apply-all-btn");
+      const auditItems = results.filter((r) => r.taskType === "audit");
+      if (auditProg && applyAllBtn) {
+        if (auditItems.length > 0) {
+          const appliedCount = auditItems.filter((r) => r.applied).length;
+          const pendingCount = auditItems.length - appliedCount;
+          auditProg.style.display = "inline";
+          if (pendingCount > 0) {
+            auditProg.innerHTML = `<span style="color:#7dd3fc;">采纳进度 ${appliedCount}/${auditItems.length}</span> · 剩余 <strong style="color:#fbbf24;">${pendingCount}</strong> 项待采纳`;
+            applyAllBtn.classList.remove("hidden");
+            if (!window._applyingAllAudits) {
+              applyAllBtn.disabled = job.status === "running";
+              applyAllBtn.textContent = `✅ 全部采纳 (${pendingCount})`;
+            }
+          } else {
+            auditProg.innerHTML = `<span style="color:#5eead4;">✅ 已全部采纳 (${auditItems.length}/${auditItems.length})</span>`;
+            applyAllBtn.classList.add("hidden");
+          }
+        } else {
+          auditProg.style.display = "none";
+          applyAllBtn.classList.add("hidden");
+        }
+      }
       if (resBox) {
         resBox.innerHTML = results.length
           ? results.map((r, idx) => {
@@ -2404,6 +2471,56 @@
         await refreshAll();
       } catch (e) {
         toast("采纳失败：" + e.message);
+      }
+    }
+
+    async function applyAllAuditCards() {
+      if (window._applyingAllAudits) return;
+      const job = getDisplayedOrganizeJob();
+      const results = job?.results || [];
+      const pending = results
+        .map((item, idx) => ({ item, idx }))
+        .filter(({ item }) => item.taskType === "audit" && !item.applied && item.verdict);
+      if (!pending.length) return toast("当前没有待采纳的体检建议");
+      const ok = await azureConfirm({
+        title: `全部采纳 ${pending.length} 条体检建议`,
+        message: `将依次把剩余 ${pending.length} 组重复/过时知识合并更新并软归档过时条目（所有更新都会自动保留 .bak 快照，归档条目随时可恢复）。确认继续吗？`,
+        confirmText: `确认全部采纳 (${pending.length})`,
+      });
+      if (!ok) return;
+
+      window._applyingAllAudits = true;
+      const btn = document.getElementById("org-apply-all-btn");
+      let done = 0;
+      let failed = 0;
+      try {
+        for (let i = 0; i < pending.length; i++) {
+          const { item } = pending[i];
+          if (btn) {
+            btn.disabled = true;
+            btn.textContent = `⏳ 采纳中 ${i + 1}/${pending.length}...`;
+          }
+          try {
+            await api("/api/organize/apply-audit", {
+              method: "POST",
+              body: JSON.stringify({ cardId: item.cardId, verdict: item.verdict }),
+            });
+            item.applied = true;
+            item.dryRun = false;
+            done++;
+            renderOrganizeModal();
+          } catch (e) {
+            failed++;
+          }
+        }
+        toast(failed === 0
+          ? `已全部采纳完成（${done}/${pending.length}），主节点均已留 .bak 快照`
+          : `批量采纳结束：成功 ${done} 条，失败 ${failed} 条`);
+        await refreshAll();
+      } finally {
+        window._applyingAllAudits = false;
+        if (btn) btn.disabled = false;
+        renderOrganizeModal();
       }
     }
 
@@ -2715,12 +2832,12 @@
           btns += `<button class="sm danger" onclick="event.stopPropagation(); quickForget('${esc(m.id)}')">归档</button>`;
         }
         div.innerHTML = `
-          <div class="row between">
-            <label class="row" style="cursor:pointer;" onclick="event.stopPropagation()">
-              <input type="checkbox" ${checked} style="width:auto;" onchange="toggleSelect('${esc(m.id)}', this.checked)" />
-              <strong>${esc(m.title)}</strong>
+          <div class="row between" style="flex-wrap:nowrap;align-items:center;gap:12px;">
+            <label class="row" style="cursor:pointer;flex:1;min-width:0;flex-wrap:nowrap;align-items:center;gap:8px;" onclick="event.stopPropagation()">
+              <input type="checkbox" ${checked} style="width:auto;flex-shrink:0;" onchange="toggleSelect('${esc(m.id)}', this.checked)" />
+              <strong style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(m.title)}">${esc(m.title)}</strong>
             </label>
-            <div class="row">${btns}</div>
+            <div class="row" style="flex-shrink:0;flex-wrap:nowrap;gap:6px;">${btns}</div>
           </div>
           <div class="muted" style="margin-top:4px;">${fmtTime(m.created_at)} · 重要度 ${Number(m.importance).toFixed(2)} · 保留 ${(Number(m.retention) * 100).toFixed(0)}% · 访问 ${m.access_count} 次</div>
         `;
@@ -2734,13 +2851,34 @@
       updateSelectedLabel();
     }
     function updateSelectedLabel() {
-      document.getElementById("selected-count-label").textContent = `已选 ${selectedIds.size} 项`;
+      const n = selectedIds.size;
+      document.getElementById("selected-count-label").textContent = `已选 ${n} 项`;
+      const btnAi = document.getElementById("btn-ai-consolidate");
+      const btnManual = document.getElementById("btn-manual-consolidate");
+      for (const b of [btnAi, btnManual]) {
+        if (!b) continue;
+        b.classList.toggle("btn-needs-sel", n === 0);
+        b.title = n === 0 ? "请先在下方勾选至少 1 条情景节点" : `将对已选的 ${n} 条情景节点执行操作`;
+      }
+    }
+    function guideToSelectEpisodic(msg) {
+      toast(msg);
+      const card = document.getElementById("maint-recent-card");
+      if (card) {
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+        card.classList.remove("card-flash");
+        void card.offsetWidth;
+        card.classList.add("card-flash");
+      }
     }
 
     async function runAiConsolidatePreview() {
       const ids = [...selectedIds];
-      if (!ids.length) return toast("请先勾选要凝结的情景节点");
-      toast("正在调用 AI 智能凝结...");
+      if (!ids.length) return guideToSelectEpisodic("请先在下方「近期未整理情景」勾选至少 1 条节点，再点 AI 凝结");
+      const btn = document.getElementById("btn-ai-consolidate");
+      const origText = btn ? btn.textContent : "✨ AI 凝结已选";
+      if (btn) { btn.disabled = true; btn.textContent = "⏳ AI 凝结中..."; }
+      toast(`正在用外部 AI 凝结已选的 ${ids.length} 条情景...`);
       try {
         const res = await api("/api/ai/consolidate", { method: "POST", body: JSON.stringify({ sourceIds: ids, commit: false }) });
         const p = res.preview;
@@ -2752,12 +2890,14 @@
         document.getElementById("consolidate-modal").classList.remove("hidden");
       } catch (e) {
         toast("AI 凝结失败：" + e.message);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = origText; }
       }
     }
 
     function openManualConsolidate() {
-      if (!selectedIds.size) return toast("请先勾选要合并的节点");
-      document.getElementById("c-modal-title").textContent = "手动合并凝结";
+      if (!selectedIds.size) return guideToSelectEpisodic("请先在下方「近期未整理情景」勾选至少 1 条节点，再点手动合并");
+      document.getElementById("c-modal-title").textContent = `手动合并凝结（已选 ${selectedIds.size} 条）`;
       document.getElementById("c-title").value = "";
       document.getElementById("c-summary").value = "";
       document.getElementById("consolidate-modal").classList.remove("hidden");
