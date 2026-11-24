@@ -91,29 +91,43 @@
     .seg-nav {
       display: flex;
       align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
       gap: 4px;
-      padding: 3px;
+      padding: 4px;
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow-x: auto;
+      border-radius: 12px;
+      max-width: 100%;
     }
-    .seg-btn {
-      border: none;
-      background: transparent;
-      color: var(--muted);
-      padding: 5px 11px;
-      border-radius: 7px;
+    .seg-nav button.seg-btn {
+      border: 1px solid transparent !important;
+      background: transparent !important;
+      color: var(--neko-muted, var(--muted)) !important;
+      padding: 6px 12px !important;
+      border-radius: 8px !important;
       cursor: pointer;
       font-size: 12px;
+      font-weight: 500;
       white-space: nowrap;
-      transition: all 0.15s;
+      transition: all 0.16s ease;
     }
-    .seg-btn:hover { color: var(--text); }
-    .seg-btn.active {
-      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.16));
-      color: var(--cyan);
-      font-weight: 600;
+    .seg-nav button.seg-btn:hover {
+      color: var(--neko-text, var(--text)) !important;
+      background: var(--neko-hover, rgba(148, 163, 184, 0.12)) !important;
+      border-color: var(--neko-border, var(--border)) !important;
+    }
+    .seg-nav button.seg-btn.active {
+      background: var(--neko-grad, linear-gradient(135deg, #2563eb 0%, #3b82f6 58%, #7c3aed 100%)) !important;
+      border-color: rgba(147, 197, 253, 0.9) !important;
+      color: #ffffff !important;
+      font-weight: 700 !important;
+      box-shadow: 0 0 0 1px rgba(147, 197, 253, 0.35), 0 5px 16px rgba(59, 130, 246, 0.38) !important;
+    }
+    .seg-nav button.seg-btn.active .badge {
+      background: rgba(255, 255, 255, 0.22) !important;
+      color: #ffffff !important;
+      border-color: rgba(255, 255, 255, 0.38) !important;
     }
     main {
       max-width: 1180px;
@@ -241,10 +255,15 @@
       transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease;
     }
     .star-chip:hover { border-color: var(--cyan); color: var(--text); }
-    .star-chip.active {
-      border-color: var(--cyan);
-      color: var(--text);
-      background: rgba(56, 189, 248, 0.16);
+    #star-orbit-filters .star-chip.active {
+      background: var(--neko-grad, linear-gradient(135deg, #2563eb 0%, #3b82f6 58%, #7c3aed 100%)) !important;
+      border-color: rgba(147, 197, 253, 0.92) !important;
+      color: #ffffff !important;
+      font-weight: 600 !important;
+      box-shadow: 0 0 0 1px rgba(147, 197, 253, 0.32), 0 4px 12px rgba(59, 130, 246, 0.36) !important;
+    }
+    #star-orbit-filters .star-chip.active .star-dot {
+      box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.7);
     }
     .star-dot {
       width: 7px;
@@ -304,10 +323,12 @@
 
     /* Observable Organizer Modal & Floating Pill */
     .org-modal {
-      width: min(860px, 95vw) !important;
-      max-width: 860px !important;
+      width: min(860px, 100%) !important;
+      max-width: 100% !important;
       max-height: 90vh;
       overflow-y: auto;
+      overflow-x: hidden;
+      box-sizing: border-box;
     }
     .org-pulse-dot {
       width: 8px;
@@ -470,44 +491,58 @@
       transition: border-color 0.15s;
     }
     .feed-item:hover { border-color: var(--cyan); }
-    .pill-filter {
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 11.5px;
-      background: var(--card-2);
-      border: 1px solid var(--border);
-      color: var(--muted);
+    #layer-pills button.tab.pill-filter {
+      padding: 4px 11px !important;
+      border-radius: 999px !important;
+      font-size: 11.5px !important;
+      font-weight: 500 !important;
+      background: var(--neko-sub, var(--card-2)) !important;
+      border: 1px solid var(--neko-border, var(--border)) !important;
+      color: var(--neko-muted, var(--muted)) !important;
       cursor: pointer;
+      transition: all 0.16s ease;
     }
-    .pill-filter.active {
-      background: rgba(56, 189, 248, 0.16);
-      color: var(--cyan);
-      border-color: var(--cyan);
+    #layer-pills button.tab.pill-filter:hover {
+      color: var(--neko-text, var(--text)) !important;
+      border-color: var(--neko-border-hi, var(--cyan)) !important;
+      background: var(--neko-sub-hover, var(--card-2)) !important;
     }
-    button.org-mode-tab {
+    #layer-pills button.tab.pill-filter.active {
+      background: var(--neko-grad, linear-gradient(135deg, #2563eb 0%, #3b82f6 58%, #7c3aed 100%)) !important;
+      color: #ffffff !important;
+      border-color: rgba(147, 197, 253, 0.92) !important;
+      font-weight: 600 !important;
+      box-shadow: 0 0 0 1px rgba(147, 197, 253, 0.34), 0 4px 14px rgba(59, 130, 246, 0.36) !important;
+    }
+    .org-modal button.tab.pill-filter.org-mode-tab {
       position: relative;
       padding: 7px 14px !important;
       border-radius: 999px !important;
       font-size: 12.5px !important;
-      font-weight: 500;
-      background: rgba(15, 23, 42, 0.55) !important;
-      border: 1px solid rgba(148, 163, 184, 0.25) !important;
-      color: var(--muted) !important;
-      opacity: 0.72;
+      font-weight: 500 !important;
+      background: var(--neko-sub, rgba(15, 23, 42, 0.55)) !important;
+      border: 1px solid var(--neko-border, rgba(148, 163, 184, 0.25)) !important;
+      color: var(--neko-muted, var(--muted)) !important;
+      opacity: 0.8;
+      max-width: 100%;
+      white-space: normal;
+      text-align: left;
+      line-height: 1.35;
       transition: all 0.18s ease;
     }
-    button.org-mode-tab:hover {
-      opacity: 0.96;
-      border-color: rgba(56, 189, 248, 0.55) !important;
-      color: #e2e8f0 !important;
+    .org-modal button.tab.pill-filter.org-mode-tab:hover {
+      opacity: 1;
+      border-color: var(--neko-border-hi, rgba(56, 189, 248, 0.6)) !important;
+      background: var(--neko-sub-hover, rgba(30, 41, 59, 0.72)) !important;
+      color: var(--neko-text, #e2e8f0) !important;
     }
-    button.org-mode-tab.active {
+    .org-modal button.tab.pill-filter.org-mode-tab.active {
       opacity: 1 !important;
       background: var(--neko-grad, linear-gradient(135deg, #2563eb 0%, #3b82f6 58%, #7c3aed 100%)) !important;
-      border-color: rgba(125, 211, 252, 0.9) !important;
+      border-color: rgba(147, 197, 253, 0.95) !important;
       color: #ffffff !important;
-      font-weight: 600 !important;
-      box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.35), 0 6px 18px rgba(59, 130, 246, 0.38) !important;
+      font-weight: 700 !important;
+      box-shadow: 0 0 0 1px rgba(147, 197, 253, 0.42), 0 6px 20px rgba(59, 130, 246, 0.44) !important;
     }
     #detail-modal { z-index: 1050; }
     .kv-row {
@@ -569,6 +604,7 @@
     }
     .modal {
       width: min(640px, 100%);
+      max-width: 100%;
       max-height: 88vh;
       overflow-y: auto;
       background: var(--card);
@@ -578,6 +614,11 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+      box-sizing: border-box;
+    }
+    @media (max-width: 640px) {
+      .modal-backdrop { padding: 10px; }
+      .modal { padding: 12px 14px; }
     }
     .hidden { display: none !important; }
     .toast {
@@ -747,15 +788,15 @@
           <button onclick="document.getElementById('stream-q').value=''; loadStream()">重置</button>
         </div>
         <div class="row" id="layer-pills">
-          <button class="pill-filter active" data-layer="" onclick="setLayerFilter('')">全部</button>
-          <button class="pill-filter" data-layer="anchor" onclick="setLayerFilter('anchor')">anchor 锚点</button>
-          <button class="pill-filter" data-layer="self" onclick="setLayerFilter('self')">self 自我</button>
-          <button class="pill-filter" data-layer="structural" onclick="setLayerFilter('structural')">structural 架构</button>
-          <button class="pill-filter" data-layer="knowledge" onclick="setLayerFilter('knowledge')">knowledge 知识</button>
-          <button class="pill-filter" data-layer="episodic" onclick="setLayerFilter('episodic')">episodic 情景</button>
-          <button class="pill-filter" data-layer="goals" onclick="setLayerFilter('goals')">goals 目标</button>
-          <button class="pill-filter" data-layer="unresolved" onclick="setLayerFilter('unresolved')">unresolved 待决</button>
-          <button class="pill-filter" data-layer="archive" onclick="setLayerFilter('archive')">已归档</button>
+          <button class="tab pill-filter active" data-layer="" onclick="setLayerFilter('')">全部</button>
+          <button class="tab pill-filter" data-layer="anchor" onclick="setLayerFilter('anchor')">anchor 锚点</button>
+          <button class="tab pill-filter" data-layer="self" onclick="setLayerFilter('self')">self 自我</button>
+          <button class="tab pill-filter" data-layer="structural" onclick="setLayerFilter('structural')">structural 架构</button>
+          <button class="tab pill-filter" data-layer="knowledge" onclick="setLayerFilter('knowledge')">knowledge 知识</button>
+          <button class="tab pill-filter" data-layer="episodic" onclick="setLayerFilter('episodic')">episodic 情景</button>
+          <button class="tab pill-filter" data-layer="goals" onclick="setLayerFilter('goals')">goals 目标</button>
+          <button class="tab pill-filter" data-layer="unresolved" onclick="setLayerFilter('unresolved')">unresolved 待决</button>
+          <button class="tab pill-filter" data-layer="archive" onclick="setLayerFilter('archive')">已归档</button>
         </div>
       </div>
 
@@ -1165,21 +1206,21 @@
   <div id="organize-modal" class="modal-backdrop hidden" onclick="if(event.target===this) minimizeOrganizeModal()">
     <div class="modal org-modal stack">
       <div class="row between" style="flex-wrap:wrap;gap:8px;">
-        <div class="row">
+        <div class="row" style="min-width:0;flex:1 1 220px;">
           <span id="org-live-dot" class="org-pulse-dot hidden"></span>
           <strong style="font-size:15px;">🚀 智能整理与实时过程观察窗</strong>
           <span id="org-status-badge" class="badge b-knowledge">待命</span>
           <span id="org-elapsed" class="muted" style="font-size:12px;"></span>
         </div>
-        <div class="row">
-          <button class="sm" onclick="minimizeOrganizeModal()">收起到角落</button>
+        <div class="row" style="flex-shrink:0;">
+          <button class="sm" style="white-space:nowrap;" onclick="minimizeOrganizeModal()">收起到角落</button>
         </div>
       </div>
 
       <!-- Mode Switcher -->
       <div class="row" style="gap:8px;flex-wrap:wrap;">
-        <button id="org-tab-episodic" class="pill-filter org-mode-tab active" onclick="setOrganizeTaskType('episodic')">✨ 整理零散情景（自动查旧合并/取代）</button>
-        <button id="org-tab-audit" class="pill-filter org-mode-tab" onclick="setOrganizeTaskType('audit')">🩺 体检过时知识（知识库去重与淘汰）</button>
+        <button id="org-tab-episodic" class="tab pill-filter org-mode-tab active" onclick="setOrganizeTaskType('episodic')">✨ 整理零散情景（自动查旧合并/取代）</button>
+        <button id="org-tab-audit" class="tab pill-filter org-mode-tab" onclick="setOrganizeTaskType('audit')">🩺 体检过时知识（知识库去重与淘汰）</button>
       </div>
 
       <!-- Run controls -->
@@ -1297,7 +1338,7 @@
       <div class="row between" style="flex-wrap:wrap;gap:6px;padding-top:6px;border-top:1px solid var(--border);">
         <div class="row" style="gap:6px;">
           <span class="muted" style="font-size:12px;">查看记录：</span>
-          <select id="org-history-select" style="width:auto;max-width:340px;" onchange="selectOrganizeRecord(this.value)">
+          <select id="org-history-select" style="width:auto;max-width:min(340px, 100%);" onchange="selectOrganizeRecord(this.value)">
             <option value="__live__">当前实时任务</option>
           </select>
         </div>
