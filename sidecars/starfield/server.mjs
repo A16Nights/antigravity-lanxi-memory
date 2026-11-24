@@ -9,10 +9,54 @@ import http from "node:http";
 import { fileURLToPath } from "node:url";
 import { LanxiEngine } from "../../lib/engine.mjs";
 import { testAiConnection, isMaskedPlaceholder } from "../../lib/ai-client.mjs";
+import {
+  countPendingEpisodic,
+  countActiveKnowledge,
+  readOrganizeHistory,
+  markAuditCardAppliedInHistory,
+  runOrganizeSession,
+  runKnowledgeAuditSession,
+  applyKnowledgeAuditDecision,
+} from "../../lib/organizer.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const HTML_PATH = path.join(__dirname, "index.html");
 const engine = new LanxiEngine();
+
+// Real-time observable organize job manager
+let activeOrganizeJob = null;
+const organizeSseClients = new Set();
+
+function serializeOrganizeJob(job) {
+  if (!job) return null;
+  return {
+    id: job.id,
+    taskType: job.taskType || "episodic",
+    mode: job.mode,
+    status: job.status,
+    dryRun: Boolean(job.dryRun),
+    startedAt: job.startedAt,
+    endedAt: job.endedAt || null,
+    model: job.model || "",
+    currentStep: job.currentStep || "",
+    stopRequested: Boolean(job.stopRequested),
+    stats: { ...(job.stats || {}) },
+    results: [...(job.results || [])],
+    logs: [...(job.logs || [])],
+    error: job.error || null,
+  };
+}
+
+function broadcastOrganizeEvent(eventName, payload) {
+  const frame = `event: ${eventName}\ndata: ${JSON.stringify(payload)}\n\n`;
+  for (const client of [...organizeSseClients]) {
+    try {
+      client.write(frame);
+    } catch {
+      organizeSseClients.delete(client);
+    }
+  }
+}
 
 const PORT = parseInt(
   process.env.ANTIGRAVITY_SIDECAR_WEB_PORT || process.env.PORT || "18792",
@@ -176,6 +220,24 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      if (req.method === "POST" && pathname === "/api/restore") {
+        const body = await readBody(req);
+        sendJson(res, 200, engine.restoreMemory(body.id));
+        return;
+      }
+
+      if (req.method === "POST" && pathname === "/api/delete") {
+        const body = await readBody(req);
+        sendJson(res, 200, engine.deleteMemory(body.id, { override: Boolean(body.override) }));
+        return;
+      }
+
+      if (req.method === "POST" && pathname === "/api/archive/purge") {
+        const body = await readBody(req);
+        sendJson(res, 200, engine.purgeArchived({ ids: Array.isArray(body.ids) ? body.ids : null }));
+        return;
+      }
+
       if (req.method === "POST" && pathname === "/api/link") {
         const body = await readBody(req);
         sendJson(res, 200, engine.linkMemories(body.sourceId, body.targetId, body.relation || "related_to", body.weight ?? 1.0));
@@ -240,6 +302,201 @@ const server = http.createServer(async (req, res) => {
       if (req.method === "POST" && pathname === "/api/ai/consolidate") {
         const body = await readBody(req);
         sendJson(res, 200, await engine.aiConsolidateCluster(body));
+        return;
+      }
+
+      if (req.method === "GET" && pathname === "/api/organize/status") {
+        sendJson(res, 200, {
+          active: serializeOrganizeJob(activeOrganizeJob),
+          pendingEpisodicCount: countPendingEpisodic(engine),
+          knowledgeCount: countActiveKnowledge(engine),
+          history: readOrganizeHistory(engine.dataDir).slice(0, 10),
+        });
+        return;
+      }
+
+      if (req.method === "GET" && pathname === "/api/organize/stream") {
+        res.writeHead(200, {
+          "Content-Type": "text/event-stream; charset=utf-8",
+          "Cache-Control": "no-cache, no-transform",
+          Connection: "keep-alive",
+        });
+        res.write(`event: snapshot\ndata: ${JSON.stringify({
+          active: serializeOrganizeJob(activeOrganizeJob),
+          pendingEpisodicCount: countPendingEpisodic(engine),
+          knowledgeCount: countActiveKnowledge(engine),
+        })}\n\n`);
+        organizeSseClients.add(res);
+        const hb = setInterval(() => {
+          try { res.write(": keepalive\n\n"); } catch {}
+        }, 15000);
+        req.on("close", () => {
+          clearInterval(hb);
+          organizeSseClients.delete(res);
+        });
+        return;
+      }
+
+      if (req.method === "POST" && pathname === "/api/organize/start") {
+        if (activeOrganizeJob && activeOrganizeJob.status === "running") {
+          sendJson(res, 409, {
+            error: "当前已有整理任务正在运行",
+            active: serializeOrganizeJob(activeOrganizeJob),
+          });
+          return;
+        }
+        const body = await readBody(req);
+        const taskType = body.taskType === "audit" ? "audit" : "episodic";
+        const jobId = `${taskType === "audit" ? "aud" : "org"}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+        const cfg = engine.loadConfig();
+        activeOrganizeJob = {
+          id: jobId,
+          taskType,
+          mode: "manual",
+          status: "running",
+          dryRun: Boolean(body.dryRun),
+          startedAt: Date.now(),
+          endedAt: null,
+          model: cfg.ai?.llmModel || "",
+          currentStep: taskType === "audit" ? "正在准备知识库过时体检..." : "正在准备情景整理任务...",
+          stopRequested: false,
+          stats: {
+            totalAvailable: 0,
+            totalCandidates: 0,
+            totalClusters: 0,
+            completedClusters: 0,
+            createdNodes: 0,
+            updatedNodes: 0,
+            supersededNodes: 0,
+            archivedSources: 0,
+            cleanClusters: 0,
+            skippedClusters: 0,
+            errors: 0,
+          },
+          results: [],
+          logs: [],
+          error: null,
+        };
+        broadcastOrganizeEvent("snapshot", {
+          active: serializeOrganizeJob(activeOrganizeJob),
+          pendingEpisodicCount: countPendingEpisodic(engine),
+          knowledgeCount: countActiveKnowledge(engine),
+        });
+
+        const runnerCallbacks = {
+          shouldStop: () => Boolean(activeOrganizeJob && activeOrganizeJob.id === jobId && activeOrganizeJob.stopRequested),
+          onEvent: ({ entry, stats, results }) => {
+            if (!activeOrganizeJob || activeOrganizeJob.id !== jobId) return;
+            activeOrganizeJob.stats = stats;
+            activeOrganizeJob.results = results;
+            activeOrganizeJob.currentStep = entry.message;
+            activeOrganizeJob.logs.push(entry);
+            if (activeOrganizeJob.logs.length > 300) activeOrganizeJob.logs.shift();
+            broadcastOrganizeEvent("progress", {
+              active: serializeOrganizeJob(activeOrganizeJob),
+              entry,
+            });
+          },
+        };
+
+        const runPromise = taskType === "audit"
+          ? runKnowledgeAuditSession(
+              engine,
+              {
+                mode: "manual",
+                jobId,
+                maxClusters: body.maxClusters ?? 12,
+                project: body.project || "",
+                dryRun: body.dryRun !== false,
+              },
+              runnerCallbacks
+            )
+          : runOrganizeSession(
+              engine,
+              {
+                mode: "manual",
+                jobId,
+                maxNodes: body.maxNodes ?? 24,
+                clusterSize: body.clusterSize ?? 6,
+                project: body.project || "",
+                order: body.order || "oldest",
+                archiveSources: body.archiveSources !== false,
+                checkExisting: body.checkExisting !== false,
+                dryRun: Boolean(body.dryRun),
+                sourceIds: Array.isArray(body.sourceIds) && body.sourceIds.length ? body.sourceIds : null,
+              },
+              runnerCallbacks
+            );
+
+        runPromise
+          .then((finished) => {
+            if (activeOrganizeJob && activeOrganizeJob.id === jobId) {
+              activeOrganizeJob.status = finished.status;
+              activeOrganizeJob.endedAt = finished.endedAt;
+              activeOrganizeJob.stats = finished.stats;
+              activeOrganizeJob.results = finished.results;
+              activeOrganizeJob.logs = finished.logs;
+              activeOrganizeJob.error = finished.error || null;
+              activeOrganizeJob.currentStep = finished.logs[finished.logs.length - 1]?.message || "整理完成";
+              broadcastOrganizeEvent("done", {
+                active: serializeOrganizeJob(activeOrganizeJob),
+                pendingEpisodicCount: countPendingEpisodic(engine),
+                knowledgeCount: countActiveKnowledge(engine),
+                history: readOrganizeHistory(engine.dataDir).slice(0, 10),
+              });
+            }
+          })
+          .catch((err) => {
+            if (activeOrganizeJob && activeOrganizeJob.id === jobId) {
+              activeOrganizeJob.status = "error";
+              activeOrganizeJob.endedAt = Date.now();
+              activeOrganizeJob.error = err?.message || String(err);
+              activeOrganizeJob.currentStep = `整理异常中断：${activeOrganizeJob.error}`;
+              activeOrganizeJob.logs.push({ ts: Date.now(), type: "error", message: activeOrganizeJob.currentStep });
+              broadcastOrganizeEvent("done", {
+                active: serializeOrganizeJob(activeOrganizeJob),
+                pendingEpisodicCount: countPendingEpisodic(engine),
+                knowledgeCount: countActiveKnowledge(engine),
+                history: readOrganizeHistory(engine.dataDir).slice(0, 10),
+              });
+            }
+          });
+
+        sendJson(res, 200, { ok: true, active: serializeOrganizeJob(activeOrganizeJob) });
+        return;
+      }
+
+      if (req.method === "POST" && pathname === "/api/organize/apply-audit") {
+        const body = await readBody(req);
+        const resExec = applyKnowledgeAuditDecision(engine, body.verdict || body);
+        if (body.cardId) {
+          if (activeOrganizeJob && Array.isArray(activeOrganizeJob.results)) {
+            const hit = activeOrganizeJob.results.find((r) => r.cardId === body.cardId);
+            if (hit) {
+              hit.applied = true;
+              hit.dryRun = false;
+            }
+          }
+          markAuditCardAppliedInHistory(engine.dataDir, body.cardId);
+        }
+        sendJson(res, 200, { ok: true, ...resExec });
+        return;
+      }
+
+      if (req.method === "POST" && pathname === "/api/organize/stop") {
+        if (!activeOrganizeJob || activeOrganizeJob.status !== "running") {
+          sendJson(res, 200, { ok: true, message: "当前没有运行中的整理任务" });
+          return;
+        }
+        activeOrganizeJob.stopRequested = true;
+        activeOrganizeJob.currentStep = "已请求停止，等待当前分组完成后优雅结束...";
+        const entry = { ts: Date.now(), type: "warn", message: activeOrganizeJob.currentStep };
+        activeOrganizeJob.logs.push(entry);
+        broadcastOrganizeEvent("progress", {
+          active: serializeOrganizeJob(activeOrganizeJob),
+          entry,
+        });
+        sendJson(res, 200, { ok: true, active: serializeOrganizeJob(activeOrganizeJob) });
         return;
       }
 

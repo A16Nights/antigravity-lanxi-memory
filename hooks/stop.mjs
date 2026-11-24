@@ -1,6 +1,47 @@
 import fs from "node:fs";
 import path from "node:path";
+import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { LanxiEngine } from "../lib/engine.mjs";
+import { countPendingEpisodic } from "../lib/organizer.mjs";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const AUTO_ORGANIZE_COOLDOWN_MS = 30 * 60 * 1000;
+
+function maybeSpawnAutoOrganize(engine, cfg) {
+  try {
+    if (!cfg.autoOrganize || !cfg.ai?.llmEnabled) return;
+    const hasKey = Boolean(String(cfg.ai?.llmApiKey || process.env.LANXI_LLM_API_KEY || "").trim());
+    if (!hasKey) return;
+
+    const lockPath = path.join(engine.dataDir, ".auto-organize.lock");
+    if (fs.existsSync(lockPath)) {
+      try {
+        const meta = JSON.parse(fs.readFileSync(lockPath, "utf8"));
+        const age = Date.now() - Number(meta.ts || 0);
+        if (meta.running && age < 15 * 60 * 1000) return;
+        if (!meta.running && age < AUTO_ORGANIZE_COOLDOWN_MS) return;
+      } catch {}
+    }
+
+    const threshold = Math.max(4, Number(cfg.autoOrganizeThreshold || 15));
+    const pending = countPendingEpisodic(engine);
+    if (pending < threshold) return;
+
+    const workerPath = path.join(__dirname, "auto-organize-worker.mjs");
+    if (!fs.existsSync(workerPath)) return;
+
+    const child = spawn(process.execPath, [workerPath], {
+      detached: true,
+      stdio: "ignore",
+      windowsHide: true,
+      env: process.env,
+    });
+    child.unref();
+  } catch {
+    // fail-open: never block Stop hook
+  }
+}
 
 function extractProjectName(input) {
   const raw = (Array.isArray(input?.workspacePaths) && input.workspacePaths[0]) || input?.cwd || "";
@@ -96,6 +137,8 @@ function main(input) {
       source: "auto-ingest",
       tags: ["auto-ingest", "antigravity"],
     });
+
+    maybeSpawnAutoOrganize(engine, cfg);
   } finally {
     engine.close();
   }

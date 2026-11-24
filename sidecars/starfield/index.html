@@ -205,51 +205,239 @@
     /* Orbital Starfield */
     .starfield-box {
       position: relative;
-      height: 380px;
+      height: 440px;
       border-radius: 12px;
       border: 1px solid var(--border);
-      background: var(--canvas-bg);
+      background:
+        radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.08) 0%, rgba(99, 102, 241, 0.04) 42%, transparent 74%),
+        var(--canvas-bg);
       overflow: hidden;
+      overscroll-behavior: contain;
     }
-    canvas#star-canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+    canvas#star-canvas { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
     canvas#star-canvas:active { cursor: grabbing; }
     .star-overlay-tl {
       position: absolute;
       top: 10px;
       left: 12px;
       display: flex;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
-      pointer-events: none;
+      z-index: 4;
     }
     .star-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       background: var(--glass);
       backdrop-filter: blur(8px);
       border: 1px solid var(--border);
       border-radius: 999px;
-      padding: 3px 9px;
+      padding: 3px 10px;
       font-size: 11px;
       color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease;
+    }
+    .star-chip:hover { border-color: var(--cyan); color: var(--text); }
+    .star-chip.active {
+      border-color: var(--cyan);
+      color: var(--text);
+      background: rgba(56, 189, 248, 0.16);
+    }
+    .star-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .star-hint {
+      position: absolute;
+      bottom: 11px;
+      left: 12px;
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--glass);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px 10px;
+      pointer-events: none;
+      opacity: 0.88;
     }
     .star-controls {
       position: absolute;
       bottom: 10px;
       right: 10px;
       display: flex;
+      align-items: center;
       gap: 4px;
+      z-index: 4;
+    }
+    .star-zoom-badge {
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--glass);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 8px;
+      min-width: 46px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
     }
     .star-tooltip {
       position: absolute;
       pointer-events: none;
       background: var(--glass);
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(10px);
       border: 1px solid var(--cyan);
-      border-radius: 8px;
-      padding: 6px 9px;
+      border-radius: 10px;
+      padding: 8px 11px;
       font-size: 11.5px;
-      max-width: 240px;
+      max-width: 260px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
       z-index: 10;
     }
+
+    /* Observable Organizer Modal & Floating Pill */
+    .org-modal {
+      width: min(860px, 95vw) !important;
+      max-width: 860px !important;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .org-pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #38bdf8;
+      display: inline-block;
+      box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7);
+      animation: orgPulse 1.4s infinite;
+    }
+    @keyframes orgPulse {
+      0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.75); }
+      70% { box-shadow: 0 0 0 8px rgba(56, 189, 248, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+    }
+    .org-progress-track {
+      height: 8px;
+      width: 100%;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.16);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .org-progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #6366f1, #38bdf8, #2dd4bf);
+      transition: width 0.3s ease;
+    }
+    .org-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .org-kpi {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.28);
+    }
+    .org-kpi .k { font-size: 11px; color: var(--muted); }
+    .org-kpi .v { font-size: 18px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .org-step-banner {
+      padding: 8px 11px;
+      border-radius: 9px;
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      background: rgba(56, 189, 248, 0.08);
+      font-size: 12.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .org-split {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 720px) {
+      .org-split { grid-template-columns: 1fr; }
+      .org-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    .org-log-box {
+      height: 260px;
+      overflow-y: auto;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(8, 13, 25, 0.65);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11.5px;
+      line-height: 1.55;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .org-log-line { display: flex; gap: 6px; align-items: flex-start; word-break: break-word; }
+    .org-log-ts { color: var(--muted); opacity: 0.72; flex-shrink: 0; font-size: 10.5px; margin-top: 1px; }
+    .org-tag {
+      padding: 0 5px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .org-tag-scan, .org-tag-group { background: rgba(56, 189, 248, 0.18); color: #7dd3fc; }
+    .org-tag-step { background: rgba(129, 140, 248, 0.22); color: #a5b4fc; }
+    .org-tag-ai { background: rgba(168, 85, 247, 0.22); color: #d8b4fe; }
+    .org-tag-ok, .org-tag-done { background: rgba(45, 212, 191, 0.22); color: #5eead4; }
+    .org-tag-warn { background: rgba(251, 191, 36, 0.22); color: #fcd34d; }
+    .org-tag-error { background: rgba(251, 113, 133, 0.22); color: #fda4af; }
+    .org-results-box {
+      height: 260px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 2px;
+    }
+    .org-result-card {
+      padding: 9px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.32);
+      cursor: pointer;
+      transition: border-color 0.16s ease, transform 0.16s ease;
+    }
+    .org-result-card:hover { border-color: var(--cyan); transform: translateY(-1px); }
+    .org-float-pill {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 950;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: rgba(12, 22, 42, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(56, 189, 248, 0.55);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.42);
+      color: #e0f2fe;
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.16s ease;
+    }
+    .org-float-pill:hover { transform: translateY(-2px); border-color: #7dd3fc; }
+    .org-float-pill.hidden { display: none !important; }
 
     /* Tide Horizon Bar */
     .horizon-bar {
@@ -441,22 +629,26 @@
             <div class="muted" id="star-stats-line">正在同步星海轨道...</div>
           </div>
           <div class="row">
+            <button class="sm" id="star-label-btn" onclick="toggleStarLabels()">标签：智能</button>
             <button class="sm" onclick="loadStarfield()">↻ 重排星图</button>
           </div>
         </div>
 
         <div class="starfield-box">
           <canvas id="star-canvas"></canvas>
-          <div class="star-overlay-tl">
-            <span class="star-chip">内核：定海锚点 (100%)</span>
-            <span class="star-chip">中环：涨潮强化</span>
-            <span class="star-chip">外带：退潮情景</span>
+          <div class="star-overlay-tl" id="star-orbit-filters">
+            <span class="star-chip active" data-orbit="all" onclick="setStarOrbitFilter('all')">全部轨道</span>
+            <span class="star-chip" data-orbit="core" onclick="setStarOrbitFilter('core')"><span class="star-dot" style="background:#818cf8"></span>内核：定海锚点</span>
+            <span class="star-chip" data-orbit="mid" onclick="setStarOrbitFilter('mid')"><span class="star-dot" style="background:#22d3ee"></span>中环：涨潮知识</span>
+            <span class="star-chip" data-orbit="outer" onclick="setStarOrbitFilter('outer')"><span class="star-dot" style="background:#94a3b8"></span>外带：退潮情景</span>
           </div>
           <div id="star-tooltip" class="star-tooltip hidden"></div>
+          <div class="star-hint">滚轮缩放 · 拖拽平移 · 悬停聚焦 · 点击查看</div>
           <div class="star-controls">
-            <button class="sm" onclick="zoomStar(1.2)">＋</button>
-            <button class="sm" onclick="zoomStar(0.84)">－</button>
-            <button class="sm" onclick="resetStarCamera()">居中</button>
+            <span class="star-zoom-badge" id="star-zoom-label">100%</span>
+            <button class="sm" onclick="zoomStar(1.2)" title="放大">＋</button>
+            <button class="sm" onclick="zoomStar(0.84)" title="缩小">－</button>
+            <button class="sm" onclick="resetStarCamera()" title="重置视角">居中</button>
           </div>
         </div>
 
@@ -529,11 +721,22 @@
       </div>
 
       <div class="card stack">
-        <div class="row between">
+        <div class="row between" style="flex-wrap:wrap;gap:6px;">
           <span class="title-sm">记忆流 <span class="muted" id="stream-count"></span></span>
-          <button class="sm primary" onclick="openWriteModal()">+ 刻录新记忆</button>
+          <div class="row" style="flex-wrap:wrap;gap:6px;">
+            <div id="archive-batch-bar" class="row hidden" style="gap:6px;">
+              <span class="muted" id="arch-sel-label" style="font-size:12px;">已选 0 项</span>
+              <button class="sm" onclick="toggleSelectAllLoadedArchive()">全选已加载</button>
+              <button class="sm danger" onclick="purgeSelectedArchive()">批量永久删除</button>
+              <button class="sm danger" onclick="purgeAllArchive()">🗑️ 一键清空全部已归档</button>
+            </div>
+            <button class="sm primary" onclick="openWriteModal()">+ 刻录新记忆</button>
+          </div>
         </div>
         <div id="stream-list" class="stack"></div>
+        <div id="stream-load-more-wrap" class="row hidden" style="justify-content:center;padding-top:6px;">
+          <button id="stream-load-more-btn" class="sm" onclick="loadStream(true)">加载更多</button>
+        </div>
       </div>
     </section>
 
@@ -566,15 +769,18 @@
     <section id="view-maintain" class="stack hidden">
       <!-- 智能凝结台 -->
       <div class="card stack">
-        <div class="row between">
+        <div class="row between" style="flex-wrap:wrap;gap:8px;">
           <div>
-            <div class="title-sm">✨ 情景智能凝结台</div>
-            <div class="muted">勾选下方「待晋升」或「退潮老化」节点，提炼为高密度长期知识节点。</div>
+            <div class="title-sm">✨ 情景智能凝结与实时整理台</div>
+            <div class="muted">支持一键按项目自动分组整理（带实时观察窗），也可在下方勾选任意情景节点精准提炼。</div>
           </div>
-          <div class="row">
+          <div class="row" style="flex-wrap:wrap;">
             <span class="muted" id="selected-count-label">已选 0 项</span>
-            <button class="sm ai-btn" onclick="runAiConsolidatePreview()">✨ AI 智能凝结</button>
-            <button class="sm" onclick="openManualConsolidate()">手动合并凝结</button>
+            <button class="sm primary" id="btn-instant-organize" onclick="openOrganizeModal(false, 'episodic')">🚀 手动即时整理 <span id="pending-epi-badge" style="opacity:0.85;"></span></button>
+            <button class="sm" id="btn-audit-knowledge" onclick="openOrganizeModal(false, 'audit')">🩺 体检过时知识 <span id="active-know-badge" style="opacity:0.8;"></span></button>
+            <button class="sm" id="btn-open-org-monitor" onclick="openOrganizeModal(true)">📺 观察整理过程</button>
+            <button class="sm ai-btn" onclick="runAiConsolidatePreview()">✨ AI 凝结已选</button>
+            <button class="sm" onclick="openManualConsolidate()">手动合并已选</button>
           </div>
         </div>
       </div>
@@ -588,6 +794,22 @@
           <span class="title-sm">退潮老化节点（低保留度，可强化或归档）</span>
           <div id="maint-decay" class="stack"></div>
         </div>
+      </div>
+
+      <div class="card stack">
+        <div class="row between" style="flex-wrap:wrap;gap:6px;">
+          <div>
+            <span class="title-sm">📝 近期未整理情景（可直接勾选凝结）</span>
+            <span class="muted" id="maint-recent-count" style="margin-left:6px;font-size:12px;"></span>
+          </div>
+          <div class="row">
+            <input id="maint-recent-filter" placeholder="筛选关键词..." style="width:150px;" oninput="renderRecentEpisodicFiltered()" />
+            <button class="sm" onclick="selectAllRecentEpisodic()">全选本页</button>
+            <button class="sm" onclick="clearSelectedEpisodic()">清空勾选</button>
+            <button class="sm primary" onclick="startOrganizeSelected()">🚀 整理已选</button>
+          </div>
+        </div>
+        <div id="maint-recent" class="stack" style="max-height:290px;overflow-y:auto;"></div>
       </div>
 
       <div class="two-col">
@@ -616,6 +838,19 @@
           <div class="kv-row">
             <span>自动情景沉淀（Stop Hook）</span>
             <span id="tog-ingest" class="toggle-btn" role="switch" tabindex="0" aria-checked="false" onclick="toggleFlag('autoIngest')"></span>
+          </div>
+          <div class="kv-row">
+            <span>后台自动整理情景（需开启聊天模型）</span>
+            <span id="tog-auto-org" class="toggle-btn" role="switch" tabindex="0" aria-checked="false" onclick="toggleFlag('autoOrganize')"></span>
+          </div>
+          <div class="kv-row">
+            <span>后台自动整理触发阈值</span>
+            <select id="sel-auto-org-th" style="width:auto;" onchange="changeAutoOrgThreshold(this.value)">
+              <option value="10">每累计满 10 条未整理情景</option>
+              <option value="15">每累计满 15 条未整理情景（推荐）</option>
+              <option value="25">每累计满 25 条未整理情景</option>
+              <option value="40">每累计满 40 条未整理情景</option>
+            </select>
           </div>
           <div class="kv-row">
             <span>每 10 轮长会话归档提醒</span>
@@ -826,10 +1061,12 @@
       <div id="d-edges" class="muted"></div>
       <div class="row between">
         <div class="row">
-          <button class="sm" onclick="touchDetail()">涨潮强化</button>
-          <button class="sm" onclick="promoteDetail()">晋升知识层</button>
+          <button id="d-touch-btn" class="sm" onclick="touchDetail()">涨潮强化</button>
+          <button id="d-promote-btn" class="sm" onclick="promoteDetail()">晋升知识层</button>
           <button id="d-rollback-btn" class="sm hidden" onclick="rollbackDetail()">⏪ 回滚上一版</button>
-          <button class="sm danger" onclick="forgetDetail()">显式归档</button>
+          <button id="d-restore-btn" class="sm primary hidden" onclick="restoreDetail()">♻️ 恢复激活</button>
+          <button id="d-forget-btn" class="sm danger" onclick="forgetDetail()">显式归档</button>
+          <button id="d-delete-btn" class="sm danger" onclick="deleteDetail()">永久删除</button>
         </div>
         <button class="primary sm" onclick="saveDetail()">保存修改</button>
       </div>
@@ -885,6 +1122,153 @@
     </div>
   </div>
 
+  <!-- Observable Instant Organize Modal -->
+  <div id="organize-modal" class="modal-backdrop hidden" onclick="if(event.target===this) minimizeOrganizeModal()">
+    <div class="modal org-modal stack">
+      <div class="row between" style="flex-wrap:wrap;gap:8px;">
+        <div class="row">
+          <span id="org-live-dot" class="org-pulse-dot hidden"></span>
+          <strong style="font-size:15px;">🚀 智能整理与实时过程观察窗</strong>
+          <span id="org-status-badge" class="badge b-knowledge">待命</span>
+          <span id="org-elapsed" class="muted" style="font-size:12px;"></span>
+        </div>
+        <div class="row">
+          <button class="sm" onclick="minimizeOrganizeModal()">收起到角落</button>
+        </div>
+      </div>
+
+      <!-- Mode Switcher -->
+      <div class="row" style="gap:6px;">
+        <button id="org-tab-episodic" class="pill-filter active" onclick="setOrganizeTaskType('episodic')">✨ 整理零散情景（自动查旧合并/取代）</button>
+        <button id="org-tab-audit" class="pill-filter" onclick="setOrganizeTaskType('audit')">🩺 体检过时知识（知识库去重与淘汰）</button>
+      </div>
+
+      <!-- Run controls -->
+      <div class="row between" style="flex-wrap:wrap;gap:8px;padding:10px;border-radius:10px;background:rgba(15,23,42,0.3);border:1px solid var(--border);">
+        <div id="org-opts-episodic" class="row" style="flex-wrap:wrap;gap:8px;">
+          <label class="row" style="gap:4px;font-size:12px;">
+            <span class="muted">本次条数</span>
+            <select id="org-max-nodes" style="width:auto;">
+              <option value="12">12 条</option>
+              <option value="24" selected>24 条（推荐）</option>
+              <option value="48">48 条</option>
+              <option value="100">100 条</option>
+              <option value="0">全部待整理</option>
+            </select>
+          </label>
+          <label class="row" style="gap:4px;font-size:12px;">
+            <span class="muted">每组</span>
+            <select id="org-cluster-size" style="width:auto;">
+              <option value="4">4 条/组</option>
+              <option value="6" selected>6 条/组</option>
+              <option value="8">8 条/组</option>
+            </select>
+          </label>
+          <label class="row" style="gap:4px;font-size:12px;">
+            <span class="muted">顺序</span>
+            <select id="org-order" style="width:auto;">
+              <option value="oldest" selected>从最早开始</option>
+              <option value="newest">从最新开始</option>
+            </select>
+          </label>
+          <label class="row" style="gap:4px;font-size:12px;cursor:pointer;" title="提炼前自动检索相似旧知识：重复则合并更新(留.bak快照)，过时则建取代边并软归档">
+            <input type="checkbox" id="org-check-existing" checked style="width:auto;" />
+            <span>查旧合并/取代</span>
+          </label>
+          <label class="row" style="gap:4px;font-size:12px;cursor:pointer;">
+            <input type="checkbox" id="org-archive-src" checked style="width:auto;" />
+            <span>归档源情景</span>
+          </label>
+          <label class="row" style="gap:4px;font-size:12px;cursor:pointer;" title="只调用 AI 生成提炼结果供观察，不写入记忆库也不归档">
+            <input type="checkbox" id="org-dry-run" style="width:auto;" />
+            <span>仅试跑预览</span>
+          </label>
+        </div>
+
+        <div id="org-opts-audit" class="row hidden" style="flex-wrap:wrap;gap:8px;">
+          <label class="row" style="gap:4px;font-size:12px;">
+            <span class="muted">体检相似组数</span>
+            <select id="org-audit-clusters" style="width:auto;">
+              <option value="6">前 6 组</option>
+              <option value="12" selected>前 12 组（推荐）</option>
+              <option value="24">前 24 组</option>
+              <option value="0">全部相似组</option>
+            </select>
+          </label>
+          <label class="row" style="gap:4px;font-size:12px;cursor:pointer;" title="勾选后只输出体检报告，在右侧逐条点「采纳」再修改；取消则自动合并并软归档过时知识（均保留.bak可恢复）">
+            <input type="checkbox" id="org-audit-dry-run" checked style="width:auto;" />
+            <span>仅生成体检建议（右侧逐条采纳）</span>
+          </label>
+        </div>
+
+        <div class="row">
+          <button id="org-start-btn" class="sm primary" onclick="startInstantOrganize(false)">▶ 立即开始整理</button>
+          <button id="org-stop-btn" class="sm danger hidden" onclick="stopInstantOrganize()">⏹ 停止整理</button>
+        </div>
+      </div>
+
+      <!-- Progress + KPIs -->
+      <div class="stack" style="gap:8px;">
+        <div class="row between" style="font-size:12px;">
+          <span class="muted" id="org-model-line">等待启动整理...</span>
+          <strong id="org-pct-label">0%</strong>
+        </div>
+        <div class="org-progress-track">
+          <div id="org-progress-fill" class="org-progress-fill"></div>
+        </div>
+        <div class="org-kpi-grid">
+          <div class="org-kpi"><div class="k" id="org-kpi-cand-lbl">纳入情景</div><div class="v" id="org-kpi-cand">0</div></div>
+          <div class="org-kpi"><div class="k" id="org-kpi-grp-lbl">分组进度</div><div class="v" id="org-kpi-grp">0 / 0</div></div>
+          <div class="org-kpi"><div class="k" id="org-kpi-new-lbl">新建/合并知识</div><div class="v" id="org-kpi-new" style="color:#5eead4;">0</div></div>
+          <div class="org-kpi"><div class="k" id="org-kpi-arch-lbl">归档/取代旧项</div><div class="v" id="org-kpi-arch" style="color:#7dd3fc;">0</div></div>
+        </div>
+        <div class="org-step-banner">
+          <span id="org-step-icon">⏳</span>
+          <span id="org-current-step" style="flex:1;">准备就绪：点击「▶ 立即开始整理」，这里会实时直播每一步扫描、分组、AI 提炼与落盘过程。</span>
+        </div>
+      </div>
+
+      <!-- Split Live Log & Live Output Cards -->
+      <div class="org-split">
+        <div class="stack" style="gap:6px;">
+          <div class="row between">
+            <span class="title-sm" style="font-size:12.5px;">📜 实时过程日志</span>
+            <span class="muted" id="org-log-count" style="font-size:11px;">0 条</span>
+          </div>
+          <div id="org-log-box" class="org-log-box">
+            <div class="muted">暂无执行日志。</div>
+          </div>
+        </div>
+        <div class="stack" style="gap:6px;">
+          <div class="row between">
+            <span class="title-sm" style="font-size:12.5px;">✨ 实时凝结产出（点击查看详情）</span>
+            <span class="muted" id="org-res-count" style="font-size:11px;">0 项</span>
+          </div>
+          <div id="org-results-box" class="org-results-box">
+            <div class="muted" style="padding:10px;">每完成一组提炼，新生成的长期知识卡片会立即显示在这里。</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- History Switcher -->
+      <div class="row between" style="flex-wrap:wrap;gap:6px;padding-top:6px;border-top:1px solid var(--border);">
+        <div class="row" style="gap:6px;">
+          <span class="muted" style="font-size:12px;">查看记录：</span>
+          <select id="org-history-select" style="width:auto;max-width:340px;" onchange="selectOrganizeRecord(this.value)">
+            <option value="__live__">当前实时任务</option>
+          </select>
+        </div>
+        <span class="muted" style="font-size:11.5px;">后台自动整理与手动即时整理的完整记录都会保留在这里。</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Pill when Organizer is Minimized -->
+  <div id="org-float-pill" class="org-float-pill hidden" onclick="openOrganizeModal(true)">
+    <span class="org-pulse-dot" id="org-float-dot"></span>
+    <span id="org-float-text">整理进行中...</span>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <script>
@@ -900,6 +1284,9 @@
     // Starfield camera & state
     let starGraph = { nodes: [], edges: [] };
     let starPoints = [];
+    let starOrbitFilter = "all";
+    let starLabelMode = "auto";
+    let hoveredStarId = null;
     let cam = { x: 0, y: 0, zoom: 1, dragging: false, lastX: 0, lastY: 0, moved: false };
 
     function api(url, opts = {}) {
@@ -977,6 +1364,9 @@
       setToggle("tog-recall", !!cfg.autoRecall);
       document.getElementById("sel-strictness").value = cfg.recallStrictness || "strict";
       setToggle("tog-ingest", !!cfg.autoIngest);
+      setToggle("tog-auto-org", !!cfg.autoOrganize);
+      const selTh = document.getElementById("sel-auto-org-th");
+      if (selTh) selTh.value = String(cfg.autoOrganizeThreshold || 15);
       setToggle("tog-rem", (cfg.turnReminderInterval ?? 10) > 0, (cfg.turnReminderInterval ?? 10) > 0 ? `每 ${cfg.turnReminderInterval} 轮` : "关闭");
       document.getElementById("sel-decay").value = cfg.decayModel || "power_law";
       document.getElementById("sel-write-gate").value = cfg.writeGate || "off";
@@ -1006,6 +1396,7 @@
 
       if (currentView === "starfield") await loadStarfield();
       else switchView(currentView);
+      loadOrganizeStatus().catch(() => {});
     }
 
     function renderHorizon(tb, total) {
@@ -1033,20 +1424,32 @@
       }
       for (const m of items) {
         const retPct = Math.round((m.retention ?? 1) * 100);
+        const isArchived = m.lifecycle_state === "archived";
         const div = document.createElement("div");
         div.className = "feed-item";
         div.onclick = () => openDetail(m.id);
+        const rightHtml = isArchived
+          ? `<div class="row" onclick="event.stopPropagation()">
+              <button class="sm" onclick="quickRestore('${esc(m.id)}')">♻️ 恢复</button>
+              <button class="sm danger" onclick="quickDelete('${esc(m.id)}')">永久删除</button>
+            </div>`
+          : `<div class="row muted" style="font-size:11px;">
+              <span class="tide-mini-track"><span class="tide-mini-fill" style="width:${retPct}%;display:block;"></span></span>
+              <span>${retPct}%</span>
+            </div>`;
+        const archCheckHtml = isArchived
+          ? `<input type="checkbox" ${archiveSelectedIds.has(m.id) ? "checked" : ""} style="width:auto;" onclick="event.stopPropagation()" onchange="toggleArchiveSelect('${esc(m.id)}', this.checked)" />`
+          : "";
         div.innerHTML = `
           <div class="row between" style="margin-bottom:4px;">
             <div class="row">
+              ${archCheckHtml}
               <span class="badge b-${esc(m.layer)}">${esc(m.layer)}</span>
               <strong>${esc(m.title)}</strong>
               ${m.protected ? '<span class="badge b-anchor">⚓ 锚点</span>' : ''}
+              ${isArchived ? '<span class="badge b-unresolved">已归档</span>' : ''}
             </div>
-            <div class="row muted" style="font-size:11px;">
-              <span class="tide-mini-track"><span class="tide-mini-fill" style="width:${retPct}%;display:block;"></span></span>
-              <span>${retPct}%</span>
-            </div>
+            ${rightHtml}
           </div>
           <div class="muted">${esc(m.preview)}</div>
           <div class="muted" style="margin-top:4px;font-size:11px;">${fmtTime(m.created_at)} · 重要度 ${Number(m.importance).toFixed(2)}${m.semanticScore ? ` · 语义 ${(m.semanticScore * 100).toFixed(0)}%` : ""}</div>
@@ -1056,82 +1459,230 @@
     }
 
     // Orbital Starfield Canvas
+    function classifyStarOrbit(n) {
+      if (n.protected || n.layer === "anchor" || n.layer === "self" || n.layer === "goals") return "core";
+      if (n.layer === "episodic") return "outer";
+      return "mid";
+    }
+
+    function setStarOrbitFilter(orbit) {
+      starOrbitFilter = orbit || "all";
+      document.querySelectorAll("#star-orbit-filters .star-chip").forEach((el) => {
+        el.classList.toggle("active", el.dataset.orbit === starOrbitFilter);
+      });
+      drawStarfield();
+    }
+
+    function toggleStarLabels() {
+      starLabelMode = starLabelMode === "auto" ? "off" : "auto";
+      const btn = document.getElementById("star-label-btn");
+      if (btn) btn.textContent = starLabelMode === "auto" ? "标签：智能" : "标签：悬停";
+      drawStarfield();
+    }
+
+    function updateStarZoomLabel() {
+      const el = document.getElementById("star-zoom-label");
+      if (el) el.textContent = `${Math.round(cam.zoom * 100)}%`;
+    }
+
     async function loadStarfield() {
-      starGraph = await api("/api/graph?limit=80");
+      starGraph = await api("/api/graph?limit=96");
       layoutStarfield();
       drawStarfield();
     }
 
     function layoutStarfield() {
       const canvas = document.getElementById("star-canvas");
-      const w = canvas.clientWidth || 640;
-      const h = canvas.clientHeight || 380;
-      canvas.width = w * devicePixelRatio;
-      canvas.height = h * devicePixelRatio;
+      if (!canvas) return;
+      const w = canvas.clientWidth || 680;
+      const h = canvas.clientHeight || 440;
+      const dpr = devicePixelRatio || 1;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
 
-      const maxR = Math.min(w, h) * 0.42;
-      starPoints = (starGraph.nodes || []).map((n, idx) => {
-        const isCore = n.protected || n.layer === "anchor" || n.layer === "self" || n.layer === "goals";
-        const ret = Number(n.retention ?? 1);
-        let orbitR;
-        if (isCore) {
-          orbitR = maxR * (0.12 + 0.16 * ((idx * 37) % 100) / 100);
-        } else if (ret >= 0.7) {
-          orbitR = maxR * (0.36 + 0.25 * (1 - ret) / 0.3 + 0.08 * ((idx * 29) % 10) / 10);
-        } else {
-          orbitR = maxR * (0.68 + 0.28 * Math.min(1, (0.7 - ret) / 0.7));
+      const maxR = Math.min(w, h) * 0.44;
+      const bands = {
+        core:  { minR: maxR * 0.08, maxR: maxR * 0.35, items: [] },
+        mid:   { minR: maxR * 0.43, maxR: maxR * 0.67, items: [] },
+        outer: { minR: maxR * 0.74, maxR: maxR * 0.96, items: [] },
+      };
+
+      for (const n of starGraph.nodes || []) {
+        const orbit = classifyStarOrbit(n);
+        bands[orbit].items.push(n);
+      }
+
+      const pts = [];
+      const goldenAngle = 2.399963229728653;
+      for (const [orbitKey, band] of Object.entries(bands)) {
+        const arr = band.items;
+        const count = arr.length;
+        const rMinSq = band.minR * band.minR;
+        const rMaxSq = band.maxR * band.maxR;
+        const phaseOffset = orbitKey === "core" ? 0.3 : (orbitKey === "mid" ? 1.7 : 3.1);
+        for (let i = 0; i < count; i++) {
+          const n = arr[i];
+          const t = count <= 1 ? 0.5 : (i + 0.5) / count;
+          // Equal-area spiral inside the orbital band prevents center crowding
+          const r = Math.sqrt(rMinSq + t * (rMaxSq - rMinSq));
+          const angle = phaseOffset + i * goldenAngle;
+          const imp = Number(n.importance || 0.5);
+          const deg = Number(n.deg || 0);
+          pts.push({
+            ...n,
+            orbit: orbitKey,
+            minR: band.minR,
+            maxR: band.maxR,
+            wx: Math.cos(angle) * r,
+            wy: Math.sin(angle) * r,
+            rad: Math.min(8.5, 4.2 + imp * 3.0 + Math.min(2, deg * 0.5)),
+          });
         }
-        const angle = idx * 2.3999632; // Golden angle spiral
-        return {
-          ...n,
-          wx: Math.cos(angle) * orbitR,
-          wy: Math.sin(angle) * orbitR,
-          rad: 4 + Number(n.importance || 0.5) * 4.5,
-        };
-      });
+      }
+
+      // Lightweight collision relaxation keeping every star inside its own orbital ring
+      for (let iter = 0; iter < 28; iter++) {
+        for (let i = 0; i < pts.length; i++) {
+          const a = pts[i];
+          for (let j = i + 1; j < pts.length; j++) {
+            const b = pts[j];
+            let dx = b.wx - a.wx;
+            let dy = b.wy - a.wy;
+            let dist = Math.hypot(dx, dy);
+            const minDist = a.rad + b.rad + 11;
+            if (dist < minDist) {
+              if (dist < 0.01) {
+                const ang = (i + j) * goldenAngle;
+                dx = Math.cos(ang);
+                dy = Math.sin(ang);
+                dist = 1;
+              }
+              const push = (minDist - dist) * 0.42;
+              const ux = dx / dist;
+              const uy = dy / dist;
+              a.wx -= ux * push;
+              a.wy -= uy * push;
+              b.wx += ux * push;
+              b.wy += uy * push;
+            }
+          }
+        }
+        for (const p of pts) {
+          const curR = Math.hypot(p.wx, p.wy) || 0.001;
+          const clampedR = Math.max(p.minR, Math.min(p.maxR, curR));
+          if (clampedR !== curR) {
+            const s = clampedR / curR;
+            p.wx *= s;
+            p.wy *= s;
+          }
+        }
+      }
+
+      starPoints = pts;
+      updateStarZoomLabel();
     }
 
     function drawStarfield() {
       const canvas = document.getElementById("star-canvas");
+      if (!canvas) return;
       const ctx = canvas.getContext("2d");
       const dpr = devicePixelRatio || 1;
-      const w = canvas.width / dpr;
-      const h = canvas.height / dpr;
+      const w = canvas.clientWidth || (canvas.width / dpr) || 680;
+      const h = canvas.clientHeight || (canvas.height / dpr) || 440;
+      if (Math.abs(canvas.width - Math.round(w * dpr)) > 2 || Math.abs(canvas.height - Math.round(h * dpr)) > 2) {
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+      }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
 
       const cx = w / 2 + cam.x;
       const cy = h / 2 + cam.y;
-      const maxR = Math.min(w, h) * 0.42 * cam.zoom;
+      const maxR = Math.min(w, h) * 0.44 * cam.zoom;
+      const isLight = document.documentElement.getAttribute("data-theme") === "light";
 
-      // Concentric tidal rings
-      const rings = [maxR * 0.29, maxR * 0.63, maxR * 0.96];
+      // Soft radial core glow
+      const glow = ctx.createRadialGradient(cx, cy, 2, cx, cy, maxR * 0.42);
+      glow.addColorStop(0, isLight ? "rgba(56, 189, 248, 0.14)" : "rgba(99, 102, 241, 0.16)");
+      glow.addColorStop(1, "rgba(56, 189, 248, 0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, maxR * 0.42, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Concentric tidal rings + subtle band captions
+      const ringDefs = [
+        { r: maxR * 0.39, stroke: "rgba(129, 140, 248, 0.34)", label: "内核 · 定海" },
+        { r: maxR * 0.705, stroke: "rgba(56, 189, 248, 0.28)", label: "中环 · 涨潮" },
+        { r: maxR * 0.99, stroke: "rgba(251, 191, 36, 0.24)", label: "外带 · 退潮" },
+      ];
       ctx.save();
-      ctx.setLineDash([4, 5]);
+      ctx.setLineDash([4, 6]);
       ctx.lineWidth = 1;
-      for (let i = 0; i < rings.length; i++) {
+      for (const rd of ringDefs) {
         ctx.beginPath();
-        ctx.arc(cx, cy, rings[i], 0, Math.PI * 2);
-        ctx.strokeStyle = i === 0 ? "rgba(129, 140, 248, 0.32)" : (i === 1 ? "rgba(56, 189, 248, 0.25)" : "rgba(251, 191, 36, 0.22)");
+        ctx.arc(cx, cy, rd.r, 0, Math.PI * 2);
+        ctx.strokeStyle = rd.stroke;
         ctx.stroke();
       }
+      ctx.setLineDash([]);
+      ctx.font = "10px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillStyle = isLight ? "rgba(15, 33, 54, 0.42)" : "rgba(148, 163, 184, 0.46)";
+      for (const rd of ringDefs) {
+        if (rd.r > 28) ctx.fillText(rd.label, cx, cy - rd.r + 12);
+      }
+      ctx.textAlign = "left";
       ctx.restore();
 
       const posMap = new Map();
       for (const p of starPoints) {
-        posMap.set(p.id, { sx: cx + p.wx * cam.zoom, sy: cy + p.wy * cam.zoom, p });
+        const visibleByFilter = starOrbitFilter === "all" || p.orbit === starOrbitFilter;
+        posMap.set(p.id, {
+          sx: cx + p.wx * cam.zoom,
+          sy: cy + p.wy * cam.zoom,
+          r: p.rad * Math.max(0.75, Math.min(1.45, Math.sqrt(cam.zoom))),
+          visibleByFilter,
+          p,
+        });
       }
 
-      ctx.strokeStyle = "rgba(56, 189, 248, 0.25)";
-      ctx.lineWidth = 1;
+      // Hover neighbor set for interactive spotlight
+      const neighborSet = new Set();
+      if (hoveredStarId) {
+        neighborSet.add(hoveredStarId);
+        for (const e of starGraph.edges || []) {
+          if (e.source_id === hoveredStarId) neighborSet.add(e.target_id);
+          if (e.target_id === hoveredStarId) neighborSet.add(e.source_id);
+        }
+      }
+
+      // Semantic edges
       for (const e of starGraph.edges || []) {
         const a = posMap.get(e.source_id);
         const b = posMap.get(e.target_id);
         if (!a || !b) continue;
+        const isHighlighted = hoveredStarId && (e.source_id === hoveredStarId || e.target_id === hoveredStarId);
+        const dimmed = (!a.visibleByFilter && !b.visibleByFilter) || (hoveredStarId && !isHighlighted);
+        ctx.save();
         ctx.beginPath();
         ctx.moveTo(a.sx, a.sy);
         ctx.lineTo(b.sx, b.sy);
+        ctx.strokeStyle = isHighlighted
+          ? "rgba(56, 189, 248, 0.88)"
+          : (dimmed ? "rgba(56, 189, 248, 0.08)" : "rgba(56, 189, 248, 0.32)");
+        ctx.lineWidth = isHighlighted ? 1.8 : 1.0;
         ctx.stroke();
+        if (isHighlighted && e.relation) {
+          const mx = (a.sx + b.sx) / 2;
+          const my = (a.sy + b.sy) / 2;
+          ctx.font = "10px sans-serif";
+          ctx.fillStyle = isLight ? "rgba(14, 116, 144, 0.92)" : "rgba(125, 211, 252, 0.95)";
+          ctx.textAlign = "center";
+          ctx.fillText(String(e.relation), mx, my - 4);
+          ctx.textAlign = "left";
+        }
+        ctx.restore();
       }
 
       const colors = {
@@ -1144,32 +1695,129 @@
         unresolved: "#fb7185",
       };
 
-      const isLight = document.documentElement.getAttribute("data-theme") === "light";
-      for (const { sx, sy, p } of posMap.values()) {
-        const r = p.rad * Math.max(0.75, Math.min(1.5, cam.zoom));
+      // Draw star nodes
+      for (const item of posMap.values()) {
+        const { sx, sy, r, visibleByFilter, p } = item;
+        if (sx < -40 || sx > w + 40 || sy < -40 || sy > h + 40) continue;
+        const isHovered = p.id === hoveredStarId;
+        const isNeighbor = hoveredStarId && neighborSet.has(p.id);
+        const alpha = !visibleByFilter
+          ? 0.14
+          : (hoveredStarId ? (isHovered || isNeighbor ? 1 : 0.24) : 0.92);
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+
+        if (isHovered || (p.protected && visibleByFilter && !hoveredStarId)) {
+          ctx.beginPath();
+          ctx.arc(sx, sy, r + (isHovered ? 6 : 3.2), 0, Math.PI * 2);
+          ctx.fillStyle = isHovered ? "rgba(56, 189, 248, 0.28)" : "rgba(129, 140, 248, 0.16)";
+          ctx.fill();
+        }
+
         ctx.beginPath();
-        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.arc(sx, sy, isHovered ? r * 1.18 : r, 0, Math.PI * 2);
         ctx.fillStyle = colors[p.layer] || "#38bdf8";
         ctx.fill();
-        if (p.protected) {
-          ctx.strokeStyle = isLight ? "#0f2136" : "#e0f2fe";
-          ctx.lineWidth = 1.4;
+
+        if (p.protected || isHovered) {
+          ctx.strokeStyle = isHovered ? "#ffffff" : (isLight ? "#0f2136" : "rgba(224, 242, 254, 0.85)");
+          ctx.lineWidth = isHovered ? 2 : 1.25;
           ctx.stroke();
         }
-        if (p.protected || cam.zoom > 1.25 || p.importance >= 0.7) {
-          ctx.fillStyle = isLight ? "rgba(15, 33, 54, 0.8)" : "rgba(230, 240, 250, 0.82)";
-          ctx.font = "10.5px sans-serif";
-          ctx.fillText(String(p.title || p.id).slice(0, 12), sx + r + 4, sy + 3);
-        }
+        ctx.restore();
       }
+
+      // Collision-free smart labels (auto-reveals more labels when zooming in)
+      const candidates = [...posMap.values()]
+        .filter((it) => it.visibleByFilter && it.sx > -20 && it.sx < w + 20 && it.sy > -20 && it.sy < h + 20)
+        .filter((it) => {
+          if (it.p.id === hoveredStarId || (hoveredStarId && neighborSet.has(it.p.id))) return true;
+          if (starLabelMode === "off") return false;
+          return true;
+        })
+        .sort((a, b) => {
+          const score = (it) =>
+            (it.p.id === hoveredStarId ? 1000 : 0) +
+            (hoveredStarId && neighborSet.has(it.p.id) ? 500 : 0) +
+            (Number(it.p.deg || 0) * 40) +
+            (it.p.protected ? 18 : 0) +
+            (Number(it.p.importance || 0) * 15);
+          return score(b) - score(a);
+        });
+
+      const maxLabels = hoveredStarId
+        ? 24
+        : Math.min(48, Math.round(12 + Math.max(0, cam.zoom - 0.8) * 18));
+      const placedBoxes = [];
+      let drawnCount = 0;
+
+      ctx.save();
+      ctx.font = "11px sans-serif";
+      for (const it of candidates) {
+        if (drawnCount >= maxLabels) break;
+        const { sx, sy, r, p } = it;
+        const isPriority = p.id === hoveredStarId || (hoveredStarId && neighborSet.has(p.id));
+        const text = String(p.title || p.id).slice(0, cam.zoom >= 1.6 ? 18 : 11);
+        const tw = ctx.measureText(text).width;
+        const padX = 5;
+        const boxW = tw + padX * 2;
+        const boxH = 17;
+        const bx = sx + r + 5;
+        const by = sy - boxH / 2;
+
+        if (bx + boxW > w - 6 || by < 36 || by + boxH > h - 34) {
+          if (!isPriority) continue;
+        }
+
+        const collides = placedBoxes.some((b) =>
+          !(bx + boxW + 4 < b.x || bx > b.x + b.w + 4 || by + boxH + 3 < b.y || by > b.y + b.h + 3)
+        );
+        if (collides && p.id !== hoveredStarId) continue;
+
+        placedBoxes.push({ x: bx, y: by, w: boxW, h: boxH });
+        drawnCount++;
+
+        ctx.fillStyle = isLight ? "rgba(255, 255, 255, 0.84)" : "rgba(13, 21, 38, 0.78)";
+        ctx.strokeStyle = isPriority
+          ? "rgba(56, 189, 248, 0.72)"
+          : (isLight ? "rgba(15, 33, 54, 0.12)" : "rgba(148, 163, 184, 0.2)");
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, boxW, boxH, 5);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = isPriority
+          ? (isLight ? "#0f2136" : "#f0f9ff")
+          : (isLight ? "rgba(15, 33, 54, 0.86)" : "rgba(226, 238, 250, 0.88)");
+        ctx.fillText(text, bx + padX, by + 12.2);
+      }
+      ctx.restore();
     }
 
-    function zoomStar(factor) {
-      cam.zoom = Math.max(0.45, Math.min(3.2, cam.zoom * factor));
+    function zoomStarAt(factor, anchorX, anchorY) {
+      const canvas = document.getElementById("star-canvas");
+      const w = canvas ? (canvas.clientWidth || 680) : 680;
+      const h = canvas ? (canvas.clientHeight || 440) : 440;
+      const mx = typeof anchorX === "number" ? anchorX : w / 2;
+      const my = typeof anchorY === "number" ? anchorY : h / 2;
+      const nextZoom = Math.max(0.35, Math.min(5.0, cam.zoom * factor));
+      if (Math.abs(nextZoom - cam.zoom) < 1e-4) return;
+      const worldX = (mx - w / 2 - cam.x) / cam.zoom;
+      const worldY = (my - h / 2 - cam.y) / cam.zoom;
+      cam.zoom = nextZoom;
+      cam.x = mx - w / 2 - worldX * cam.zoom;
+      cam.y = my - h / 2 - worldY * cam.zoom;
+      updateStarZoomLabel();
       drawStarfield();
+    }
+    function zoomStar(factor) {
+      zoomStarAt(factor);
     }
     function resetStarCamera() {
       cam = { x: 0, y: 0, zoom: 1, dragging: false, lastX: 0, lastY: 0, moved: false };
+      updateStarZoomLabel();
       drawStarfield();
     }
 
@@ -1180,13 +1828,32 @@
       const my = clientY - rect.top;
       const cx = rect.width / 2 + cam.x;
       const cy = rect.height / 2 + cam.y;
+      let best = null;
+      let bestDist = Infinity;
       for (const p of starPoints) {
+        if (starOrbitFilter !== "all" && p.orbit !== starOrbitFilter) continue;
         const sx = cx + p.wx * cam.zoom;
         const sy = cy + p.wy * cam.zoom;
-        if (Math.hypot(sx - mx, sy - my) <= p.rad + 6) return { p, mx, my };
+        const r = p.rad * Math.max(0.75, Math.min(1.45, Math.sqrt(cam.zoom)));
+        const d = Math.hypot(sx - mx, sy - my);
+        if (d <= r + 7 && d < bestDist) {
+          bestDist = d;
+          best = { p, mx, my };
+        }
       }
-      return null;
+      return best;
     }
+
+    // Mouse wheel zoom directly inside the starfield canvas (anchored to cursor)
+    starCanvas.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const rect = starCanvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const rawFactor = Math.exp(-e.deltaY * 0.0015);
+      const factor = Math.max(0.78, Math.min(1.28, rawFactor));
+      zoomStarAt(factor, mx, my);
+    }, { passive: false });
 
     starCanvas.addEventListener("mousedown", (e) => {
       cam.dragging = true;
@@ -1195,6 +1862,14 @@
       cam.lastY = e.clientY;
     });
     window.addEventListener("mouseup", () => { cam.dragging = false; });
+    starCanvas.addEventListener("mouseleave", () => {
+      const tip = document.getElementById("star-tooltip");
+      if (tip) tip.classList.add("hidden");
+      if (hoveredStarId !== null) {
+        hoveredStarId = null;
+        drawStarfield();
+      }
+    });
     starCanvas.addEventListener("mousemove", (e) => {
       if (cam.dragging) {
         const dx = e.clientX - cam.lastX;
@@ -1209,12 +1884,20 @@
       }
       const hit = hitTestStar(e.clientX, e.clientY);
       const tip = document.getElementById("star-tooltip");
+      const nextHover = hit ? hit.p.id : null;
+      if (nextHover !== hoveredStarId) {
+        hoveredStarId = nextHover;
+        drawStarfield();
+      }
       if (hit) {
-        tip.innerHTML = `<strong>${esc(hit.p.title)}</strong><div class="muted">${esc(hit.p.layer)} · 保留 ${(hit.p.retention * 100).toFixed(0)}% · 重要度 ${hit.p.importance}</div>`;
-        tip.style.left = Math.min(starCanvas.clientWidth - 220, hit.mx + 12) + "px";
-        tip.style.top = Math.max(8, hit.my - 28) + "px";
+        starCanvas.style.cursor = "pointer";
+        const degText = Number(hit.p.deg || 0) > 0 ? ` · 连边 ${hit.p.deg}` : "";
+        tip.innerHTML = `<strong>${esc(hit.p.title)}</strong><div class="muted" style="margin-top:3px;">${esc(hit.p.layer)}${hit.p.protected ? " · ⚓硬保护" : ""} · 保留 ${(hit.p.retention * 100).toFixed(0)}% · 重要度 ${hit.p.importance}${degText}</div>`;
+        tip.style.left = Math.max(8, Math.min(starCanvas.clientWidth - 268, hit.mx + 14)) + "px";
+        tip.style.top = Math.max(40, Math.min(starCanvas.clientHeight - 66, hit.my - 28)) + "px";
         tip.classList.remove("hidden");
       } else {
+        starCanvas.style.cursor = "grab";
         tip.classList.add("hidden");
       }
     });
@@ -1226,6 +1909,14 @@
         openDetail(hit.p.id);
       }
     });
+
+    if (typeof ResizeObserver !== "undefined") {
+      new ResizeObserver(() => {
+        if (currentView === "starfield" && starPoints.length) {
+          drawStarfield();
+        }
+      }).observe(starCanvas);
+    }
 
     async function createLink() {
       const sourceId = document.getElementById("link-src").value.trim();
@@ -1243,20 +1934,111 @@
       renderFeed(document.getElementById("quick-results"), data.items || []);
     }
 
-    function setLayerFilter(layer) {
-      layerFilter = layer;
-      document.querySelectorAll("#layer-pills .pill-filter").forEach((b) => b.classList.toggle("active", b.dataset.layer === layer));
-      loadStream();
+    let streamItemsCache = [];
+    let streamTotalCount = 0;
+    let streamOffset = 0;
+    const STREAM_PAGE_SIZE = 60;
+    let archiveSelectedIds = new Set();
+
+    function updateArchiveBatchBar() {
+      const bar = document.getElementById("archive-batch-bar");
+      const isArch = layerFilter === "archive";
+      if (bar) bar.classList.toggle("hidden", !isArch);
+      const lbl = document.getElementById("arch-sel-label");
+      if (lbl) lbl.textContent = `已选 ${archiveSelectedIds.size} 项`;
     }
 
-    async function loadStream() {
+    function toggleArchiveSelect(id, checked) {
+      if (checked) archiveSelectedIds.add(id);
+      else archiveSelectedIds.delete(id);
+      updateArchiveBatchBar();
+    }
+
+    function toggleSelectAllLoadedArchive() {
+      const loadedIds = streamItemsCache.filter((m) => m.lifecycle_state === "archived").map((m) => m.id);
+      const allSelected = loadedIds.length > 0 && loadedIds.every((id) => archiveSelectedIds.has(id));
+      if (allSelected) {
+        for (const id of loadedIds) archiveSelectedIds.delete(id);
+      } else {
+        for (const id of loadedIds) archiveSelectedIds.add(id);
+      }
+      renderFeed(document.getElementById("stream-list"), streamItemsCache);
+      updateArchiveBatchBar();
+    }
+
+    async function purgeSelectedArchive() {
+      const ids = [...archiveSelectedIds];
+      if (!ids.length) return toast("请先勾选要永久删除的已归档节点");
+      const ok = await azureConfirm({
+        title: "确认批量永久删除已归档节点",
+        message: `确定要永久删除已勾选的 ${ids.length} 条已归档记忆吗？`,
+        note: "将同步清理本地 Markdown 文件、.bak 快照、连边与索引记录，删除后无法找回。",
+        okText: `永久删除 (${ids.length})`,
+        danger: true,
+      });
+      if (!ok) return;
+      const res = await api("/api/archive/purge", { method: "POST", body: JSON.stringify({ ids }) });
+      archiveSelectedIds.clear();
+      toast(`已永久删除 ${res.deleted || 0} 条归档记忆`);
+      await refreshAll();
+    }
+
+    async function purgeAllArchive() {
+      if (!streamTotalCount) return toast("当前没有已归档记忆");
+      const ok = await azureConfirm({
+        title: "确认一键清空全部已归档记忆",
+        message: `确定要永久清空全部 ${streamTotalCount} 条已归档记忆吗？`,
+        note: "仅清空「已归档」目录中的节点，不影响活跃记忆。此操作不可恢复，将同步释放磁盘与索引空间。",
+        okText: `清空全部 (${streamTotalCount})`,
+        danger: true,
+      });
+      if (!ok) return;
+      const res = await api("/api/archive/purge", { method: "POST", body: JSON.stringify({}) });
+      archiveSelectedIds.clear();
+      toast(`已清空全部 ${res.deleted || 0} 条归档记忆`);
+      await refreshAll();
+    }
+
+    function setLayerFilter(layer) {
+      layerFilter = layer;
+      archiveSelectedIds.clear();
+      document.querySelectorAll("#layer-pills .pill-filter").forEach((b) => b.classList.toggle("active", b.dataset.layer === layer));
+      loadStream(false);
+    }
+
+    async function loadStream(append = false) {
       const q = document.getElementById("stream-q").value.trim();
       const sort = document.getElementById("stream-sort").value;
       const lifecycle = layerFilter === "archive" ? "archived" : "active";
       const layer = layerFilter === "archive" ? "" : layerFilter;
-      const data = await api(`/api/memories?layer=${encodeURIComponent(layer)}&q=${encodeURIComponent(q)}&lifecycle=${lifecycle}&sort=${sort}&hybrid=1&limit=80`);
-      document.getElementById("stream-count").textContent = `(共 ${data.total} 条${data.hybridUsed ? " · 混合语义排序" : ""})`;
-      renderFeed(document.getElementById("stream-list"), data.items || []);
+      if (!append) {
+        streamOffset = 0;
+        streamItemsCache = [];
+      }
+      const data = await api(`/api/memories?layer=${encodeURIComponent(layer)}&q=${encodeURIComponent(q)}&lifecycle=${lifecycle}&sort=${sort}&hybrid=1&limit=${STREAM_PAGE_SIZE}&offset=${streamOffset}`);
+      const batch = data.items || [];
+      streamTotalCount = Number(data.total ?? batch.length);
+      if (append) {
+        const seen = new Set(streamItemsCache.map((x) => x.id));
+        for (const it of batch) {
+          if (!seen.has(it.id)) streamItemsCache.push(it);
+        }
+      } else {
+        streamItemsCache = batch;
+      }
+      streamOffset = streamItemsCache.length;
+
+      document.getElementById("stream-count").textContent = `(已显示 ${streamItemsCache.length} / 共 ${streamTotalCount} 条${data.hybridUsed ? " · 混合语义排序" : ""})`;
+      renderFeed(document.getElementById("stream-list"), streamItemsCache);
+      updateArchiveBatchBar();
+
+      const moreWrap = document.getElementById("stream-load-more-wrap");
+      const moreBtn = document.getElementById("stream-load-more-btn");
+      const hasMore = !data.hybridUsed && streamItemsCache.length < streamTotalCount && batch.length > 0;
+      if (moreWrap) moreWrap.classList.toggle("hidden", !hasMore);
+      if (moreBtn && hasMore) {
+        moreBtn.textContent = `加载更多（剩余 ${streamTotalCount - streamItemsCache.length} 条）`;
+      }
     }
 
     async function loadAnchors() {
@@ -1300,16 +2082,490 @@
     }
 
     let mcpShareCache = null;
+    let recentEpisodicCache = [];
+    let organizeTaskType = "episodic";
+    let organizeLiveJob = null;
+    let organizeHistoryCache = [];
+    let organizeViewingId = "__live__";
+    let organizeSse = null;
+    let organizePollTimer = null;
+    let organizeElapsedTimer = null;
+
+    function setOrganizeTaskType(type) {
+      organizeTaskType = type === "audit" ? "audit" : "episodic";
+      document.getElementById("org-tab-episodic")?.classList.toggle("active", organizeTaskType === "episodic");
+      document.getElementById("org-tab-audit")?.classList.toggle("active", organizeTaskType === "audit");
+      document.getElementById("org-opts-episodic")?.classList.toggle("hidden", organizeTaskType !== "episodic");
+      document.getElementById("org-opts-audit")?.classList.toggle("hidden", organizeTaskType !== "audit");
+      const startBtn = document.getElementById("org-start-btn");
+      if (startBtn) {
+        startBtn.textContent = organizeTaskType === "audit" ? "🩺 立即开始体检" : "▶ 立即开始整理";
+      }
+      renderOrganizeModal();
+    }
 
     // Maintenance & Settings
     async function loadMaintain() {
       const q = await api("/api/maintain");
       renderMaint("maint-promote", q.toPromote || [], "promote");
       renderMaint("maint-decay", q.decaying || [], "decay");
+      recentEpisodicCache = q.recentEpisodic || [];
+      const pendingCnt = q.pendingEpisodicCount ?? recentEpisodicCache.length;
+      const badge = document.getElementById("pending-epi-badge");
+      if (badge) badge.textContent = pendingCnt > 0 ? `(${pendingCnt})` : "";
+      const rc = document.getElementById("maint-recent-count");
+      if (rc) rc.textContent = `共 ${pendingCnt} 条待整理，当前展示最近 ${recentEpisodicCache.length} 条`;
+      renderRecentEpisodicFiltered();
       updateSelectedLabel();
+      loadOrganizeStatus().catch(() => {});
       loadExternalSources().catch(() => {});
       loadBriefing().catch(() => {});
       loadMcpShare().catch(() => {});
+    }
+
+    function renderRecentEpisodicFiltered() {
+      const kw = (document.getElementById("maint-recent-filter")?.value || "").trim().toLowerCase();
+      const filtered = kw
+        ? recentEpisodicCache.filter((m) =>
+            String(m.title || "").toLowerCase().includes(kw) ||
+            String(m.preview || "").toLowerCase().includes(kw) ||
+            (m.tags || []).some((t) => String(t).toLowerCase().includes(kw))
+          )
+        : recentEpisodicCache;
+      renderMaint("maint-recent", filtered, "recent");
+    }
+
+    function selectAllRecentEpisodic() {
+      const kw = (document.getElementById("maint-recent-filter")?.value || "").trim().toLowerCase();
+      const filtered = kw
+        ? recentEpisodicCache.filter((m) =>
+            String(m.title || "").toLowerCase().includes(kw) ||
+            String(m.preview || "").toLowerCase().includes(kw)
+          )
+        : recentEpisodicCache;
+      for (const m of filtered) selectedIds.add(m.id);
+      renderRecentEpisodicFiltered();
+      updateSelectedLabel();
+    }
+
+    function clearSelectedEpisodic() {
+      selectedIds.clear();
+      renderRecentEpisodicFiltered();
+      updateSelectedLabel();
+    }
+
+    async function changeAutoOrgThreshold(val) {
+      await api("/api/settings", { method: "POST", body: JSON.stringify({ autoOrganizeThreshold: parseInt(val, 10) || 15 }) });
+      toast(`已设为累计满 ${val} 条情景时触发后台自动整理`);
+    }
+
+    // Observable Organizer Window
+    function fmtLogTime(ts) {
+      const d = new Date(Number(ts || Date.now()));
+      return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
+    }
+
+    function updateOrganizeFloatPill() {
+      const pill = document.getElementById("org-float-pill");
+      const txt = document.getElementById("org-float-text");
+      const dot = document.getElementById("org-float-dot");
+      const modalOpen = !document.getElementById("organize-modal")?.classList.contains("hidden");
+      const monBtn = document.getElementById("btn-open-org-monitor");
+      const isRunning = organizeLiveJob && organizeLiveJob.status === "running";
+      if (monBtn) {
+        monBtn.textContent = isRunning
+          ? `📺 整理进行中 (${organizeLiveJob.stats?.completedClusters || 0}/${organizeLiveJob.stats?.totalClusters || "?"})`
+          : "📺 观察整理过程";
+      }
+      if (!pill) return;
+      if (isRunning && !modalOpen) {
+        const s = organizeLiveJob.stats || {};
+        txt.textContent = `整理中 ${s.completedClusters || 0}/${s.totalClusters || "?"} 组 · 新凝结 ${s.createdNodes || 0} 条 · 点击查看`;
+        if (dot) dot.classList.remove("hidden");
+        pill.classList.remove("hidden");
+      } else {
+        pill.classList.add("hidden");
+      }
+    }
+
+    function renderOrganizeHistorySelect() {
+      const sel = document.getElementById("org-history-select");
+      if (!sel) return;
+      const prev = organizeViewingId || "__live__";
+      const opts = ['<option value="__live__">当前实时任务</option>'];
+      for (const h of organizeHistoryCache) {
+        const dt = h.startedAt ? new Date(h.startedAt).toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+        const isAudit = h.taskType === "audit";
+        const modeTag = isAudit ? (h.dryRun ? "体检建议" : "知识体检") : (h.mode === "auto" ? "自动整理" : (h.dryRun ? "试跑" : "手动整理"));
+        const stTag = h.status === "done" ? "完成" : (h.status === "stopped" ? "停止" : "出错");
+        const sumTxt = isAudit
+          ? `检出 ${(h.results || []).length} 组`
+          : `新建 ${h.stats?.createdNodes || 0} / 合并 ${h.stats?.updatedNodes || 0}`;
+        opts.push(`<option value="${esc(h.id)}">[${modeTag}·${stTag}] ${esc(dt)} · ${sumTxt}</option>`);
+      }
+      sel.innerHTML = opts.join("");
+      sel.value = opts.some((o) => o.includes(`value="${esc(prev)}"`)) ? prev : "__live__";
+      organizeViewingId = sel.value;
+    }
+
+    function selectOrganizeRecord(val) {
+      organizeViewingId = val || "__live__";
+      renderOrganizeModal();
+    }
+
+    function getDisplayedOrganizeJob() {
+      if (organizeViewingId && organizeViewingId !== "__live__") {
+        const hit = organizeHistoryCache.find((h) => h.id === organizeViewingId);
+        if (hit) return hit;
+      }
+      if (organizeLiveJob) return organizeLiveJob;
+      return organizeHistoryCache[0] || null;
+    }
+
+    function renderOrganizeModal() {
+      const job = getDisplayedOrganizeJob();
+      const isLiveRunning = Boolean(organizeLiveJob && organizeLiveJob.status === "running");
+
+      const startBtn = document.getElementById("org-start-btn");
+      const stopBtn = document.getElementById("org-stop-btn");
+      const liveDot = document.getElementById("org-live-dot");
+      if (startBtn) startBtn.classList.toggle("hidden", isLiveRunning);
+      if (stopBtn) {
+        stopBtn.classList.toggle("hidden", !isLiveRunning);
+        stopBtn.disabled = Boolean(organizeLiveJob?.stopRequested);
+        stopBtn.textContent = organizeLiveJob?.stopRequested ? "正在停止..." : "⏹ 停止整理";
+      }
+      if (liveDot) liveDot.classList.toggle("hidden", !isLiveRunning);
+
+      const badge = document.getElementById("org-status-badge");
+      const elapsedEl = document.getElementById("org-elapsed");
+      const modelLine = document.getElementById("org-model-line");
+      const pctLabel = document.getElementById("org-pct-label");
+      const fill = document.getElementById("org-progress-fill");
+      const stepIcon = document.getElementById("org-step-icon");
+      const stepText = document.getElementById("org-current-step");
+      const logBox = document.getElementById("org-log-box");
+      const logCount = document.getElementById("org-log-count");
+      const resBox = document.getElementById("org-results-box");
+      const resCount = document.getElementById("org-res-count");
+
+      if (!job) {
+        if (badge) { badge.textContent = "待命"; badge.className = "badge b-knowledge"; }
+        if (elapsedEl) elapsedEl.textContent = "";
+        if (modelLine) modelLine.textContent = `当前模型：${overview?.config?.ai?.llmModel || "未配置"}`;
+        if (pctLabel) pctLabel.textContent = "0%";
+        if (fill) fill.style.width = "0%";
+        if (stepIcon) stepIcon.textContent = "⏳";
+        if (stepText) stepText.textContent = "准备就绪：点击「▶ 立即开始整理」，这里会实时直播每一步扫描、分组、AI 提炼与落盘过程。";
+        if (logBox) logBox.innerHTML = '<div class="muted">暂无执行日志。</div>';
+        if (logCount) logCount.textContent = "0 条";
+        if (resBox) resBox.innerHTML = '<div class="muted" style="padding:10px;">每完成一组提炼，新生成的长期知识卡片会立即显示在这里。</div>';
+        if (resCount) resCount.textContent = "0 项";
+        updateOrganizeFloatPill();
+        return;
+      }
+
+      const stMap = {
+        running: ["整理进行中", "b-self", "⚡"],
+        done: ["整理完成", "b-structural", "✅"],
+        stopped: ["已手动停止", "b-goals", "⏹"],
+        error: ["执行异常", "b-unresolved", "⚠️"],
+      };
+      const [stTxt, stCls, icon] = stMap[job.status] || ["待命", "b-knowledge", "⏳"];
+      if (badge) { badge.textContent = stTxt + (job.dryRun ? " · 试跑" : ""); badge.className = "badge " + stCls; }
+      if (stepIcon) stepIcon.textContent = icon;
+
+      if (elapsedEl && job.startedAt) {
+        const end = job.endedAt || Date.now();
+        const sec = Math.max(0, (end - job.startedAt) / 1000).toFixed(1);
+        elapsedEl.textContent = `耗时 ${sec}s`;
+      }
+
+      const s = job.stats || {};
+      const totalGrp = Number(s.totalClusters || 0);
+      const doneGrp = Number(s.completedClusters || 0);
+      const pct = job.status === "done"
+        ? 100
+        : (totalGrp > 0 ? Math.min(99, Math.round((doneGrp / totalGrp) * 100)) : (job.status === "running" ? 8 : 0));
+
+      const isAuditJob = job.taskType === "audit";
+      if (modelLine) {
+        const modeTxt = isAuditJob
+          ? "知识库过时与去重体检"
+          : (job.mode === "auto" ? "后台自动整理" : "手动即时整理");
+        modelLine.textContent = `${modeTxt} · 模型：${job.model || "默认"}`;
+      }
+      if (pctLabel) pctLabel.textContent = `${pct}%`;
+      if (fill) fill.style.width = `${pct}%`;
+
+      document.getElementById("org-kpi-cand-lbl").textContent = isAuditJob ? "相似知识条数" : "纳入情景";
+      document.getElementById("org-kpi-grp-lbl").textContent = isAuditJob ? "体检组进度" : "分组进度";
+      document.getElementById("org-kpi-new-lbl").textContent = isAuditJob ? "检出可优化组" : "新建/合并知识";
+      document.getElementById("org-kpi-arch-lbl").textContent = isAuditJob ? "过时/重复条数" : "归档/取代旧项";
+
+      document.getElementById("org-kpi-cand").textContent = String(s.totalCandidates || 0);
+      document.getElementById("org-kpi-grp").textContent = `${doneGrp} / ${totalGrp}`;
+      document.getElementById("org-kpi-new").textContent = isAuditJob
+        ? String((job.results || []).length)
+        : String((s.createdNodes || 0) + (s.updatedNodes || 0));
+      document.getElementById("org-kpi-arch").textContent = isAuditJob
+        ? String(s.supersededNodes || 0)
+        : String((s.archivedSources || 0) + (s.supersededNodes || 0));
+
+      const lastLog = (job.logs || [])[(job.logs || []).length - 1];
+      if (stepText) stepText.textContent = job.currentStep || lastLog?.message || "执行中...";
+
+      const logs = job.logs || [];
+      if (logCount) logCount.textContent = `${logs.length} 条`;
+      if (logBox) {
+        const nearBottom = logBox.scrollHeight - logBox.scrollTop - logBox.clientHeight < 60;
+        const tagNames = { scan: "扫描", group: "分组", step: "步骤", ai: "AI", ok: "产出", done: "完成", warn: "提醒", error: "错误" };
+        logBox.innerHTML = logs.length
+          ? logs.map((l) => `
+              <div class="org-log-line">
+                <span class="org-log-ts">${fmtLogTime(l.ts)}</span>
+                <span class="org-tag org-tag-${esc(l.type || "step")}">${tagNames[l.type] || l.type || "日志"}</span>
+                <span>${esc(l.message)}</span>
+              </div>
+            `).join("")
+          : '<div class="muted">等待日志输出...</div>';
+        if (nearBottom || job.status === "running") {
+          logBox.scrollTop = logBox.scrollHeight;
+        }
+      }
+
+      const results = job.results || [];
+      if (resCount) resCount.textContent = `${results.length} 项`;
+      if (resBox) {
+        resBox.innerHTML = results.length
+          ? results.map((r, idx) => {
+              if (r.taskType === "audit") {
+                const actBadge = r.action === "merge"
+                  ? '<span class="badge b-knowledge">合并重复</span>'
+                  : '<span class="badge b-unresolved">淘汰过时</span>';
+                const stateBadge = r.applied
+                  ? '<span class="badge b-structural">✅ 已采纳执行</span>'
+                  : '<span class="badge b-goals">待确认采纳</span>';
+                const archList = (r.archiveTitles || []).map((t) => `「${esc(String(t).slice(0, 22))}」`).join("、");
+                return `
+                  <div class="org-result-card" onclick="${r.id ? `openDetail('${esc(r.id)}')` : ""}">
+                    <div class="row between" style="margin-bottom:4px;gap:6px;">
+                      <div class="row" style="gap:5px;flex-wrap:wrap;">
+                        ${actBadge}
+                        ${stateBadge}
+                      </div>
+                      ${!r.applied ? `<button class="sm primary" onclick="event.stopPropagation(); applyAuditCard(${idx})">✅ 采纳此建议</button>` : `<span class="muted" style="font-size:11px;">已留.bak并归档</span>`}
+                    </div>
+                    <strong style="font-size:12.5px;display:block;margin-bottom:3px;">保留：${esc(r.title)}</strong>
+                    ${archList ? `<div class="muted" style="font-size:11px;margin-bottom:3px;">软归档 (${(r.archiveIds || []).length} 条)：${archList}</div>` : ""}
+                    ${r.reason ? `<div style="font-size:11.5px;color:#7dd3fc;line-height:1.45;">💡 ${esc(r.reason)}</div>` : ""}
+                  </div>
+                `;
+              }
+              const actBadge = r.action === "update"
+                ? '<span class="badge b-structural">🔄 合并更新(已留.bak)</span>'
+                : (r.action === "supersede"
+                  ? `<span class="badge b-unresolved">♻️ 取代 ${r.supersededCount || (r.supersededIds || []).length} 条旧知识</span>`
+                  : (r.dryRun ? '<span class="badge b-goals">预览未写入</span>' : '<span class="badge b-anchor">⚓ 新建落盘</span>'));
+              return `
+                <div class="org-result-card" onclick="${r.id ? `openDetail('${esc(r.id)}')` : ""}">
+                  <div class="row between" style="margin-bottom:4px;">
+                    <div class="row" style="gap:5px;flex-wrap:wrap;">
+                      <span class="badge b-${esc(r.layer || "knowledge")}">${esc(r.layer || "knowledge")}</span>
+                      ${actBadge}
+                    </div>
+                    <span class="muted" style="font-size:11px;">合并 ${r.sourceCount || 0} 条 · ${((r.latencyMs || 0) / 1000).toFixed(1)}s</span>
+                  </div>
+                  <strong style="font-size:12.5px;display:block;margin-bottom:3px;">${esc(r.title)}</strong>
+                  ${r.reason ? `<div style="font-size:11px;color:#7dd3fc;margin-bottom:3px;">💡 ${esc(r.reason)}</div>` : ""}
+                  <div class="muted" style="font-size:11.5px;line-height:1.45;">${esc(String(r.summary || "").slice(0, 140))}${String(r.summary || "").length > 140 ? "..." : ""}</div>
+                </div>
+              `;
+            }).join("")
+          : `<div class="muted" style="padding:10px;">${isAuditJob ? "未检出需处理的重复/过时知识，或正在体检中..." : "等待模型提炼第一组记忆..."}</div>`;
+      }
+
+      updateOrganizeFloatPill();
+    }
+
+    async function applyAuditCard(resultIndex) {
+      const job = getDisplayedOrganizeJob();
+      const item = job?.results?.[resultIndex];
+      if (!item || !item.verdict) return toast("未找到该体检建议详情");
+      try {
+        await api("/api/organize/apply-audit", {
+          method: "POST",
+          body: JSON.stringify({ cardId: item.cardId, verdict: item.verdict }),
+        });
+        item.applied = true;
+        item.dryRun = false;
+        renderOrganizeModal();
+        toast("已采纳：主节点已留 .bak 快照更新，过时条目已软归档（可随时恢复）");
+        await refreshAll();
+      } catch (e) {
+        toast("采纳失败：" + e.message);
+      }
+    }
+
+    async function loadOrganizeStatus() {
+      const data = await api("/api/organize/status");
+      organizeLiveJob = data.active || null;
+      organizeHistoryCache = data.history || [];
+      const kb = document.getElementById("active-know-badge");
+      if (kb && typeof data.knowledgeCount === "number") {
+        kb.textContent = data.knowledgeCount > 0 ? `(${data.knowledgeCount})` : "";
+      }
+      renderOrganizeHistorySelect();
+      renderOrganizeModal();
+      if (organizeLiveJob && organizeLiveJob.status === "running") {
+        ensureOrganizeStream();
+      }
+    }
+
+    function ensureOrganizeStream() {
+      if (!organizeSse && typeof EventSource !== "undefined") {
+        const q = TOKEN ? `?token=${encodeURIComponent(TOKEN)}` : "";
+        const es = new EventSource(`/api/organize/stream${q}`);
+        organizeSse = es;
+        const onPayload = (ev) => {
+          try {
+            const data = JSON.parse(ev.data || "{}");
+            if (data.active) organizeLiveJob = data.active;
+            if (Array.isArray(data.history)) {
+              organizeHistoryCache = data.history;
+              renderOrganizeHistorySelect();
+            }
+            renderOrganizeModal();
+          } catch {}
+        };
+        es.addEventListener("snapshot", onPayload);
+        es.addEventListener("progress", onPayload);
+        es.addEventListener("done", (ev) => {
+          onPayload(ev);
+          stopOrganizePolling();
+          refreshAll().catch(() => {});
+        });
+        es.onerror = () => {
+          try { es.close(); } catch {}
+          organizeSse = null;
+        };
+      }
+      if (!organizePollTimer) {
+        organizePollTimer = setInterval(async () => {
+          try {
+            const data = await api("/api/organize/status");
+            organizeLiveJob = data.active || null;
+            organizeHistoryCache = data.history || [];
+            renderOrganizeHistorySelect();
+            renderOrganizeModal();
+            if (!organizeLiveJob || organizeLiveJob.status !== "running") {
+              stopOrganizePolling();
+              refreshAll().catch(() => {});
+            }
+          } catch {}
+        }, 1600);
+      }
+      if (!organizeElapsedTimer) {
+        organizeElapsedTimer = setInterval(() => {
+          if (organizeLiveJob && organizeLiveJob.status === "running") {
+            const el = document.getElementById("org-elapsed");
+            if (el && organizeLiveJob.startedAt) {
+              el.textContent = `耗时 ${Math.max(0, (Date.now() - organizeLiveJob.startedAt) / 1000).toFixed(1)}s`;
+            }
+          } else {
+            clearInterval(organizeElapsedTimer);
+            organizeElapsedTimer = null;
+          }
+        }, 400);
+      }
+    }
+
+    function stopOrganizePolling() {
+      if (organizePollTimer) {
+        clearInterval(organizePollTimer);
+        organizePollTimer = null;
+      }
+      if (organizeElapsedTimer) {
+        clearInterval(organizeElapsedTimer);
+        organizeElapsedTimer = null;
+      }
+      if (organizeSse) {
+        try { organizeSse.close(); } catch {}
+        organizeSse = null;
+      }
+    }
+
+    async function openOrganizeModal(viewOnly = false, preferredType = null) {
+      document.getElementById("organize-modal").classList.remove("hidden");
+      organizeViewingId = "__live__";
+      if (preferredType) setOrganizeTaskType(preferredType);
+      await loadOrganizeStatus().catch(() => {});
+      updateOrganizeFloatPill();
+      if (!viewOnly && organizeLiveJob && organizeLiveJob.status === "running") {
+        ensureOrganizeStream();
+      }
+    }
+
+    function minimizeOrganizeModal() {
+      document.getElementById("organize-modal").classList.add("hidden");
+      updateOrganizeFloatPill();
+    }
+
+    async function startOrganizeSelected() {
+      if (!selectedIds.size) return toast("请先勾选要整理的情景节点");
+      setOrganizeTaskType("episodic");
+      document.getElementById("organize-modal").classList.remove("hidden");
+      await startInstantOrganize(true);
+    }
+
+    async function startInstantOrganize(useSelected = false) {
+      let payload;
+      if (!useSelected && organizeTaskType === "audit") {
+        const rawClusters = parseInt(document.getElementById("org-audit-clusters")?.value ?? "12", 10);
+        payload = {
+          taskType: "audit",
+          maxClusters: Number.isNaN(rawClusters) ? 12 : rawClusters,
+          dryRun: Boolean(document.getElementById("org-audit-dry-run")?.checked),
+        };
+      } else {
+        const rawMax = parseInt(document.getElementById("org-max-nodes")?.value ?? "24", 10);
+        payload = {
+          taskType: "episodic",
+          maxNodes: Number.isNaN(rawMax) ? 24 : rawMax,
+          clusterSize: parseInt(document.getElementById("org-cluster-size")?.value || "6", 10),
+          order: document.getElementById("org-order")?.value || "oldest",
+          checkExisting: Boolean(document.getElementById("org-check-existing")?.checked),
+          archiveSources: Boolean(document.getElementById("org-archive-src")?.checked),
+          dryRun: Boolean(document.getElementById("org-dry-run")?.checked),
+        };
+        if (useSelected && selectedIds.size > 0) {
+          payload.sourceIds = [...selectedIds];
+          payload.maxNodes = payload.sourceIds.length;
+        }
+      }
+      try {
+        organizeViewingId = "__live__";
+        const res = await api("/api/organize/start", { method: "POST", body: JSON.stringify(payload) });
+        organizeLiveJob = res.active || null;
+        if (useSelected) selectedIds.clear();
+        renderOrganizeHistorySelect();
+        renderOrganizeModal();
+        ensureOrganizeStream();
+      } catch (e) {
+        toast("启动整理失败：" + e.message);
+        await loadOrganizeStatus().catch(() => {});
+      }
+    }
+
+    async function stopInstantOrganize() {
+      try {
+        const res = await api("/api/organize/stop", { method: "POST", body: JSON.stringify({}) });
+        if (res.active) organizeLiveJob = res.active;
+        renderOrganizeModal();
+        toast("已发送停止信号，当前分组完成后将安全结束");
+      } catch (e) {
+        toast("停止失败：" + e.message);
+      }
     }
 
     async function loadExternalSources() {
@@ -1451,6 +2707,9 @@
         let btns = `<button class="sm" onclick="event.stopPropagation(); openDetail('${esc(m.id)}')">查看</button>`;
         if (kind === "promote") {
           btns += `<button class="sm primary" onclick="event.stopPropagation(); quickPromote('${esc(m.id)}')">晋升</button>`;
+        } else if (kind === "recent") {
+          btns += `<button class="sm primary" onclick="event.stopPropagation(); quickPromote('${esc(m.id)}')">晋升</button>`;
+          btns += `<button class="sm danger" onclick="event.stopPropagation(); quickForget('${esc(m.id)}')">归档</button>`;
         } else {
           btns += `<button class="sm" onclick="event.stopPropagation(); quickTouch('${esc(m.id)}')">强化</button>`;
           btns += `<button class="sm danger" onclick="event.stopPropagation(); quickForget('${esc(m.id)}')">归档</button>`;
@@ -1463,7 +2722,7 @@
             </label>
             <div class="row">${btns}</div>
           </div>
-          <div class="muted" style="margin-top:4px;">重要度 ${Number(m.importance).toFixed(2)} · 保留 ${(Number(m.retention) * 100).toFixed(0)}% · 访问 ${m.access_count} 次</div>
+          <div class="muted" style="margin-top:4px;">${fmtTime(m.created_at)} · 重要度 ${Number(m.importance).toFixed(2)} · 保留 ${(Number(m.retention) * 100).toFixed(0)}% · 访问 ${m.access_count} 次</div>
         `;
         box.appendChild(div);
       }
@@ -1754,12 +3013,18 @@
         store.open({ id: detailNode.id, title: detailNode.title || detailNode.id });
         renderLanxiTabBar();
       }
+      const isArchived = detailNode.lifecycle_state === "archived";
       document.getElementById("d-id").textContent = "节点：" + detailNode.id;
       document.getElementById("d-badges").innerHTML = `
         <span class="badge b-${esc(detailNode.layer)}">${esc(detailNode.layer)}</span>
         ${detailNode.protected ? '<span class="badge b-anchor">⚓ 硬保护</span>' : ''}
+        ${isArchived ? '<span class="badge b-unresolved">已归档</span>' : ''}
         <span class="muted">保留 ${(detailNode.retention * 100).toFixed(1)}% · 访问 ${detailNode.access_count} 次</span>
       `;
+      document.getElementById("d-touch-btn")?.classList.toggle("hidden", isArchived);
+      document.getElementById("d-promote-btn")?.classList.toggle("hidden", isArchived);
+      document.getElementById("d-forget-btn")?.classList.toggle("hidden", isArchived);
+      document.getElementById("d-restore-btn")?.classList.toggle("hidden", !isArchived);
       document.getElementById("d-title").value = detailNode.title || "";
       document.getElementById("d-body").value = detailNode.body || "";
       document.getElementById("d-imp").value = detailNode.importance ?? 0.5;
@@ -1946,6 +3211,58 @@
       await api("/api/forget", { method: "POST", body: JSON.stringify({ id: detailNode.id, reason: "starfield_archive", override }) });
       toast("已归档");
       closeDetailModal();
+      await refreshAll();
+    }
+    async function restoreDetail() {
+      if (!detailNode) return;
+      await api("/api/restore", { method: "POST", body: JSON.stringify({ id: detailNode.id }) });
+      toast("已恢复为活跃节点");
+      await openDetail(detailNode.id);
+      await refreshAll();
+    }
+    async function deleteDetail() {
+      if (!detailNode) return;
+      const isArchived = detailNode.lifecycle_state === "archived";
+      const ok = await azureConfirm({
+        title: "确认永久删除节点",
+        message: `确定要永久删除「${detailNode.title || detailNode.id}」吗？`,
+        note: "将同步删除本地 Markdown 原文件、备份快照、图谱连边与索引记录，此操作不可恢复。",
+        okText: "永久删除",
+        danger: true,
+      });
+      if (!ok) return;
+      const id = detailNode.id;
+      await api("/api/delete", { method: "POST", body: JSON.stringify({ id, override: !isArchived && Boolean(detailNode.protected) }) });
+      const store = getLanxiTabStore();
+      if (store && typeof store.close === "function") {
+        store.close(id);
+        renderLanxiTabBar();
+      }
+      toast("已永久删除");
+      closeDetailModal();
+      await refreshAll();
+    }
+    async function quickRestore(id) {
+      await api("/api/restore", { method: "POST", body: JSON.stringify({ id }) });
+      toast("已恢复为活跃节点");
+      await refreshAll();
+    }
+    async function quickDelete(id) {
+      const ok = await azureConfirm({
+        title: "确认永久删除归档节点",
+        message: `确定要永久删除该归档节点（${id}）吗？`,
+        note: "将同步清理本地 Markdown 文件、快照与索引记录，删除后无法找回。",
+        okText: "永久删除",
+        danger: true,
+      });
+      if (!ok) return;
+      await api("/api/delete", { method: "POST", body: JSON.stringify({ id, override: true }) });
+      const store = getLanxiTabStore();
+      if (store && typeof store.close === "function") {
+        store.close(id);
+        renderLanxiTabBar();
+      }
+      toast("已永久删除");
       await refreshAll();
     }
 

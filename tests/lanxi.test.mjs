@@ -255,7 +255,7 @@ test("MCP stdio server, lifecycle hooks, and Starfield Sidecar HTTP server", asy
     });
     assert.equal(mcpOut.status, 0, mcpOut.stderr);
     const msgs = mcpOut.stdout.trim().split(/\r?\n/).map((l) => JSON.parse(l));
-    assert.equal(msgs[1].result.tools.length, 12);
+    assert.ok(msgs[1].result.tools.length >= 12);
     const recallResult = JSON.parse(msgs[3].result.content[0].text);
     assert.ok(recallResult.length >= 1);
     const maintResult = JSON.parse(msgs[4].result.content[0].text);

@@ -2,6 +2,7 @@
 import { getSidebarToolDefinition, getSidebarResourceDefinition, getSidebarResourceUri, handleSidebarToolCall, buildSidebarResourceReadResult } from "./lib/sidebar-nav.mjs";
 import readline from "node:readline";
 import { LanxiEngine, VALID_LAYERS } from "./lib/engine.mjs";
+import { runOrganizeSession, runKnowledgeAuditSession } from "./lib/organizer.mjs";
 
 const engine = new LanxiEngine();
 
@@ -155,31 +156,34 @@ const TOOLS = [
   },
   {
     name: "cg_maintain",
-    description: "潮汐维护：查看维护队列（queue），晋升情景（promote），强化访问（touch），批量修改/确认重要度（set_importance），手动或 AI 智能凝结（consolidate / ai_consolidate），补全向量（backfill_embeddings），生成项目活地图（briefing），回滚节点快照（rollback），增量同步外部知识目录（sync_sources），或重建索引（rebuild）。",
+    description: "潮汐维护：查看维护队列（queue），晋升情景（promote），强化访问（touch），恢复归档（restore），永久删除（delete），清空已归档（purge_archived），批量修改/确认重要度（set_importance），手动或 AI 智能凝结（consolidate / ai_consolidate），批量智能整理情景（organize），知识库过时与去重体检（audit_knowledge），补全向量（backfill_embeddings），生成项目活地图（briefing），回滚节点快照（rollback），增量同步外部知识目录（sync_sources），或重建索引（rebuild）。",
     inputSchema: {
       type: "object",
       properties: {
         op: {
           type: "string",
-          enum: ["queue", "promote", "touch", "set_importance", "consolidate", "ai_consolidate", "backfill_embeddings", "briefing", "rollback", "sync_sources", "rebuild"],
+          enum: ["queue", "promote", "touch", "restore", "delete", "purge_archived", "set_importance", "consolidate", "ai_consolidate", "organize", "audit_knowledge", "backfill_embeddings", "briefing", "rollback", "sync_sources", "rebuild"],
           description: "默认 queue"
         },
-        id: { type: "string", description: "promote/touch/set_importance/rollback 时的目标节点 ID" },
+        id: { type: "string", description: "promote/touch/restore/delete/set_importance/rollback 时的目标节点 ID" },
         backupFile: { type: "string", description: "rollback 时可选指定 .bak.md 快照文件名，默认回滚最新一份" },
-        project: { type: "string", description: "briefing 时指定的项目名" },
+        project: { type: "string", description: "briefing/organize/audit_knowledge 时可选指定的项目名" },
         sourceId: { type: "string", description: "sync_sources 时可选指定单个外部源 ID" },
         force: { type: "boolean", description: "sync_sources 时是否强制全量重切" },
-        ids: { type: "array", items: { type: "string" }, description: "set_importance 批量目标节点 ID 列表" },
+        ids: { type: "array", items: { type: "string" }, description: "set_importance 或 purge_archived 的批量目标节点 ID 列表" },
         importance: { type: "number", description: "set_importance 要设置的重要度 0~1" },
         confirm: { type: "boolean", description: "set_importance 时是否同时确认保护（将 hint 转为 confirmed）" },
         confirmedBy: { type: "string", description: "确认来源标识，默认 'user'" },
-        override: { type: "boolean", description: "set_importance 降低受保护节点重要度时传 true" },
+        override: { type: "boolean", description: "set_importance 降低受保护节点重要度或 delete 硬保护活跃节点时传 true" },
         targetLayer: { type: "string", enum: ["knowledge", "structural", "self", "anchor"], description: "promote/consolidate 目标层" },
         sourceIds: { type: "array", items: { type: "string" }, description: "consolidate / ai_consolidate 的源节点 ID 列表" },
         title: { type: "string", description: "consolidate 新节点标题" },
         summary: { type: "string", description: "consolidate 提炼后的摘要正文" },
         commit: { type: "boolean", description: "ai_consolidate 时是否直接写入落盘，默认 false 仅预览草稿" },
-        archiveSources: { type: "boolean", description: "凝结后是否归档非保护源节点" },
+        archiveSources: { type: "boolean", description: "凝结/整理后是否归档源情景节点，默认 true" },
+        dryRun: { type: "boolean", description: "organize 或 audit_knowledge 时是否仅预览不写入，audit_knowledge 默认 true" },
+        maxNodes: { type: "integer", description: "organize 每次最大处理条数，默认 24，0 表示全部" },
+        maxClusters: { type: "integer", description: "audit_knowledge 最大体检相似组数，默认 12" },
         limit: { type: "integer", description: "backfill_embeddings 批量上限，默认 50" }
       }
     }
@@ -250,9 +254,30 @@ async function dispatchTool(name, args = {}) {
       if (op === "queue") return engine.getMaintenanceQueue();
       if (op === "promote") return engine.promoteMemory(args.id, args.targetLayer || "knowledge");
       if (op === "touch") return engine.touchMemory(args.id);
+      if (op === "restore") return engine.restoreMemory(args.id);
+      if (op === "delete") return engine.deleteMemory(args.id, { override: Boolean(args.override) });
+      if (op === "purge_archived") return engine.purgeArchived({ ids: Array.isArray(args.ids) ? args.ids : null });
       if (op === "set_importance") return engine.setImportanceBatch(args);
       if (op === "consolidate") return engine.consolidateCluster(args);
       if (op === "ai_consolidate") return await engine.aiConsolidateCluster(args);
+      if (op === "organize") {
+        return await runOrganizeSession(engine, {
+          mode: "manual",
+          maxNodes: args.maxNodes ?? 24,
+          project: args.project || "",
+          archiveSources: args.archiveSources !== false,
+          dryRun: Boolean(args.dryRun),
+          sourceIds: Array.isArray(args.sourceIds) ? args.sourceIds : null,
+        });
+      }
+      if (op === "audit_knowledge") {
+        return await runKnowledgeAuditSession(engine, {
+          mode: "manual",
+          maxClusters: args.maxClusters ?? 12,
+          project: args.project || "",
+          dryRun: args.dryRun !== false,
+        });
+      }
       if (op === "backfill_embeddings") return await engine.backfillEmbeddings(args.limit ?? 50);
       if (op === "briefing") return engine.buildProjectBriefing(args.project || "", { maxChars: args.maxChars || 900 });
       if (op === "rollback") return engine.rollbackMemory(args.id, args.backupFile || null);

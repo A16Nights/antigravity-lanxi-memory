@@ -21,6 +21,13 @@ function main(input = {}) {
     const cfg = engine.loadConfig();
     if (cfg.autoSessionStart === false) return {};
 
+    // Lightweight mtime-based incremental sync for enabled external knowledge sources
+    try {
+      if (Array.isArray(cfg.externalSources) && cfg.externalSources.some((s) => s && s.enabled !== false)) {
+        engine.syncExternalSources({ force: false });
+      }
+    } catch {}
+
     const overview = engine.getOverview();
     const project = extractProjectName(input);
     const identityRows = engine.recall({
