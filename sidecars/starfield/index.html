@@ -980,9 +980,9 @@
         </div>
 
         <div class="card stack">
-          <span class="title-sm">外部知识库只读导入（Obsidian / Markdown / DSH）</span>
+          <span class="title-sm">外部知识库只读导入（Obsidian / Markdown）</span>
           <div class="muted">严格只读扫描源目录，不修改或删除任何原文件，重复 ID 自动跳过。</div>
-          <input id="import-dir" placeholder="例如：D:\Notes\ObsidianVault 或 ~/.dsh/.dsh-memory/data/mdcg" />
+          <input id="import-dir" placeholder="例如：D:\Notes\ObsidianVault 或 ~/Documents/Notes" />
           <div class="row">
             <button class="primary sm" onclick="importVault()">开始只读导入</button>
             <button class="sm" onclick="rebuildIndex()">重建 FTS5 索引</button>
@@ -1032,7 +1032,7 @@
               <button class="sm primary" onclick="copyMcpShare()">一键复制</button>
             </div>
           </div>
-          <div class="muted">粘贴到 Claude Code / Cursor / Codex / DSH 等任意 MCP 客户端，即可直接共用同一个蓝汐记忆库。</div>
+          <div class="muted">粘贴到 Claude Code / Cursor / Codex 等任意 MCP 客户端，即可直接共用同一个蓝汐记忆库。</div>
           <pre id="mcp-share-preview" style="margin:0;white-space:pre-wrap;word-break:break-all;font-size:11.5px;line-height:1.45;max-height:155px;overflow:auto;padding:10px;border-radius:8px;background:rgba(15,23,42,0.35);border:1px solid var(--border);color:var(--text);">加载中...</pre>
         </div>
       </div>

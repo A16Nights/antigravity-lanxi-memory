@@ -159,7 +159,7 @@ Restart or reload Antigravity (`Ctrl+R`), enable **Lanxi Memory** in **Plugins**
 | `cg_reflect` | Record metacognitive reflections (`self`) or open mysteries (`unresolved`) |
 | `cg_maintain` | Run tidal maintenance: candidate queues, promotion, reinforcement, `set_importance`, condense, embeddings, `briefing`, `rollback`, `sync_sources`, reindex |
 | `cg_stats` | Inspect layer counts, retention distribution, `dataStale` status, and masked configuration |
-| `cg_import_vault` | Strictly read-only import from external Markdown folders, Obsidian Vaults, or DSH memory stores |
+| `cg_import_vault` | Strictly read-only import from external Markdown folders, or Obsidian Vaults |
 
 <h2 id="storage">
 <picture>

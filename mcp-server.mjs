@@ -201,7 +201,7 @@ const TOOLS = [
   },
   {
     name: "cg_import_vault",
-    description: "以严格只读方式从外部 Markdown 目录（兼容标准 Frontmatter、Obsidian Vault 与 DSH mdcg）导入历史笔记到蓝汐认知图谱。",
+    description: "以严格只读方式从外部 Markdown 目录（兼容标准 Frontmatter 与 Obsidian Vault）导入历史笔记到蓝汐认知图谱。",
     inputSchema: {
       type: "object",
       required: ["sourceDir"],
@@ -295,8 +295,6 @@ async function dispatchTool(name, args = {}) {
       return engine.getOverview();
     case "cg_import_vault":
       return engine.importFromVault(args.sourceDir);
-    case "cg_import_dsh":
-      return engine.importFromDsh(args.sourceDir);
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
@@ -335,7 +333,7 @@ async function handleLine(line) {
         sendResponse(id, {
           protocolVersion: params?.protocolVersion || "2024-11-05",
           capabilities: { tools: {}, resources: {} },
-          serverInfo: { name: "lanxi-memory", version: "1.5.0" },
+          serverInfo: { name: "lanxi-memory", version: "1.5.1" },
         });
         break;
       case "ping":

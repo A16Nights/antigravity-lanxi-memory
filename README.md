@@ -96,7 +96,7 @@
 - **📚 外部知识目录增量同步 FTS5**：支持在维护台绑定本地经验文档或笔记目录（只读），按文件修改时间与哈希自动增量切块同步进 FTS5 索引，绝不修改原文件；对话召回时自动匹配外部知识切片。
 - **🗺️ 项目活地图（Project Briefing）**：自动按当前项目聚合架构规范、进行中目标、待解决疑点与核心避坑，在 `SessionStart` 开场注入精炼高密度概览，面板支持实时预览与一键复制。
 - **🔗 原话溯源与 `.bak` 自动快照回滚**：自动沉淀记忆时记录 `conversationId#stepIndex` 溯源标记（面板一键复制会话 ID 定位原对话）；`cg_update` 覆写或合并前自动生成 `vault/.backups/*.bak.md` 快照（每节点保留最近 5 份），支持面板或 MCP 一键回滚上一版。
-- **🔌 跨工具 MCP 一键共享**：面板内直接生成本机标准 `mcpServers` JSON 与 Claude Code CLI 命令，一键复制即可在 Claude Code / Cursor / Codex / DSH 中共用同一个蓝汐记忆库。
+- **🔌 跨工具 MCP 一键共享**：面板内直接生成本机标准 `mcpServers` JSON 与 Claude Code CLI 命令，一键复制即可在 Claude Code / Cursor / Codex 等 MCP 客户端中共用同一个蓝汐记忆库。
 
 ### 7. 苍蓝统一视觉与交互体系
 - **Neko Glass 毛玻璃界面 & 苍蓝主题色调中心**：深色/浅色切换、自定义毛玻璃下拉框（`AzureSelect`）与确认弹窗、6 套官方配色预设 + 自定义双色 + 4 个自定义栏位跨插件同步、左侧栏快捷入口开关、独立浏览器全屏 `Web UI` 与 GitHub Release 在线更新检查。
@@ -163,7 +163,7 @@ git clone https://github.com/A16Nights/antigravity-lanxi-memory.git ~/.gemini/co
 | `cg_reflect` | 记录元认知反思（`self`）或登记待解决疑点（`unresolved`） |
 | `cg_maintain` | 执行潮汐维护：候选队列查询、节点晋升、访问强化、批量重要度确认、手动/AI 凝结、向量补全、项目活地图（`briefing`）、快照回滚（`rollback`）、外部源增量同步（`sync_sources`）、索引重建 |
 | `cg_stats` | 获取各层级节点统计、潮汐水位分布、`dataStale` 磁盘新鲜度检测与脱敏配置 |
-| `cg_import_vault` | 严格只读扫描并导入外部 Markdown 目录 / Obsidian Vault / DSH 记忆库 |
+| `cg_import_vault` | 严格只读扫描并导入外部 Markdown 目录 / Obsidian Vault |
 
 <h2 id="storage">
 <picture>
