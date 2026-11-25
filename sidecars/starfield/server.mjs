@@ -121,7 +121,7 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && (pathname === "/" || pathname === "/index.html")) {
     const html = fs.readFileSync(HTML_PATH, "utf8");
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-    res.end(injectAzureUiKit(injectSidebarToggleWidget(html, "lingshu-cortex"), "lingshu-cortex"));
+    res.end(injectAzureUiKit(injectSidebarToggleWidget(html, "lanxi-memory"), "lanxi-memory"));
     return;
   }
 
@@ -137,15 +137,15 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && pathname === "/api/sidebar-nav") {
         sendJson(res, 200, {
           ok: true,
-          pluginId: "lingshu-cortex",
-          showInLeftSidebar: isLeftSidebarEnabled("lingshu-cortex"),
+          pluginId: "lanxi-memory",
+          showInLeftSidebar: isLeftSidebarEnabled("lanxi-memory"),
           plugins: listOwnedPluginsNavState()
         });
         return;
       }
       if (req.method === "POST" && pathname === "/api/sidebar-nav") {
         const body = await readBody(req);
-        const targetId = String(body.pluginId || "lingshu-cortex").trim();
+        const targetId = String(body.pluginId || "lanxi-memory").trim();
         const nextVal = Boolean(body.showInLeftSidebar);
         setLeftSidebarEnabled(targetId, nextVal);
         const rf = await refreshAntigravityMcpServers();
@@ -667,7 +667,7 @@ server.listen(PORT, "127.0.0.1", () => {
     const __p = (__a && typeof __a === "object" && __a.port) ? __a.port : Number(PORT) || 0;
     const __t = (process.env.ANTIGRAVITY_SIDECAR_UI_TOKEN || process.env.ANTIGRAVITY_SIDECAR_AUTH_TOKEN || process.env.ANTIGRAVITY_SIDECAR_WEB_TOKEN || "").trim();
     const __u = __t ? `http://127.0.0.1:${__p}/?token=${encodeURIComponent(__t)}` : `http://127.0.0.1:${__p}/`;
-    registerSidecarRuntime("lingshu-cortex", { port: __p, url: __u });
+    registerSidecarRuntime("lanxi-memory", { port: __p, url: __u });
   } catch {}
 });
 

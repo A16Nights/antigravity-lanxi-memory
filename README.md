@@ -177,7 +177,7 @@ git clone https://github.com/A16Nights/antigravity-lanxi-memory.git ~/.gemini/co
 
 <br>
 
-- **Markdown 记忆真源库**：`~/.gemini/lanxi-memory/vault/`（兼容目录 `~/.gemini/lingshu-cortex/vault/`）
+- **Markdown 记忆真源库**：`~/.gemini/lanxi-memory/vault/`
 - **本地全文与向量索引库**：`~/.gemini/lanxi-memory/index.sqlite`
 - **插件与可选 AI 接口配置**：`~/.gemini/lanxi-memory/config.json`
 - **苍蓝套件共享主题 / 左侧栏配置**：`~/.gemini/azure-theme.json`、`~/.gemini/azure-sidebar-nav.json`

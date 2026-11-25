@@ -335,26 +335,26 @@ async function handleLine(line) {
         sendResponse(id, {
           protocolVersion: params?.protocolVersion || "2024-11-05",
           capabilities: { tools: {}, resources: {} },
-          serverInfo: { name: "lingshu-cortex", version: "1.4.4" },
+          serverInfo: { name: "lanxi-memory", version: "1.5.0" },
         });
         break;
       case "ping":
         sendResponse(id, {});
         break;
       case "tools/list": {
-        const sbTool = getSidebarToolDefinition("lingshu-cortex");
+        const sbTool = getSidebarToolDefinition("lanxi-memory");
         sendResponse(id, { tools: sbTool ? [...TOOLS, sbTool] : TOOLS });
         break;
       }
       case "resources/list": {
-        const sbRes = getSidebarResourceDefinition("lingshu-cortex");
+        const sbRes = getSidebarResourceDefinition("lanxi-memory");
         sendResponse(id, { resources: sbRes ? [sbRes] : [] });
         break;
       }
       case "resources/read": {
         const uri = params?.uri;
-        if (uri === getSidebarResourceUri("lingshu-cortex")) {
-          sendResponse(id, buildSidebarResourceReadResult("lingshu-cortex"));
+        if (uri === getSidebarResourceUri("lanxi-memory")) {
+          sendResponse(id, buildSidebarResourceReadResult("lanxi-memory"));
         } else {
           sendError(id, -32602, `Unknown resource: ${uri}`);
         }
@@ -362,8 +362,8 @@ async function handleLine(line) {
       }
       case "tools/call": {
         const toolName = params?.name;
-        if (toolName === "open_lingshu_cortex_ui") {
-          sendResponse(id, handleSidebarToolCall("lingshu-cortex"));
+        if (toolName === "open_lanxi_memory_ui") {
+          sendResponse(id, handleSidebarToolCall("lanxi-memory"));
           break;
         }
         const toolArgs = params?.arguments || {};

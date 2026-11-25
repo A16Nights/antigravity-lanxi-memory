@@ -173,7 +173,7 @@ Restart or reload Antigravity (`Ctrl+R`), enable **Lanxi Memory** in **Plugins**
 
 <br>
 
-- **Markdown Truth Vault**: `~/.gemini/lanxi-memory/vault/` (also compatible with `~/.gemini/lingshu-cortex/vault/`)
+- **Markdown Truth Vault**: `~/.gemini/lanxi-memory/vault/`
 - **Local FTS5 & Vector Index**: `~/.gemini/lanxi-memory/index.sqlite`
 - **Plugin & Optional AI Config**: `~/.gemini/lanxi-memory/config.json`
 - **Shared Azure Suite Theme & Sidebar Config**: `~/.gemini/azure-theme.json`, `~/.gemini/azure-sidebar-nav.json`

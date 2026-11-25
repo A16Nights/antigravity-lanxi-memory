@@ -10,7 +10,7 @@ description: >-
 
 # 蓝汐 · 潮汐认知图谱（Lanxi Memory）
 
-- **可视化工作台**：`[蓝汐 · 潮汐星海](sidecar://lanxi-memory/starfield/)`（支持在右侧栏或浏览器全屏查看轨道星图、记忆流与维护台）。
+- **可视化工作台**：仅在用户明确要求打开记忆星图/维护台时输出 `[蓝汐 · 潮汐星海](sidecar://lanxi-memory/starfield/)`（Antigravity 2.35.1+ 回复含该链接会自动在侧栏展开，按需输出；也可通过工作台右上角在浏览器全屏查看）。
 - **真源存储**：`~/.gemini/lanxi-memory/vault/`（纯 Markdown + Frontmatter，Obsidian 兼容），检索索引位于 `~/.gemini/lanxi-memory/index.sqlite`（SQLite FTS5 + 中文 2-gram 分词 + 可选向量索引）。
 
 ## 五层认知与潮汐保护规则

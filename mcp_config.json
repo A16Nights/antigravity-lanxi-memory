@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "lingshu-cortex": {
+    "lanxi-memory": {
       "command": "node",
       "args": ["./mcp-server.mjs"]
     }
