@@ -333,7 +333,7 @@ async function handleLine(line) {
         sendResponse(id, {
           protocolVersion: params?.protocolVersion || "2024-11-05",
           capabilities: { tools: {}, resources: {} },
-          serverInfo: { name: "lanxi-memory", version: "1.5.1" },
+          serverInfo: { name: "lanxi-memory", version: "1.5.2" },
         });
         break;
       case "ping":

@@ -2,7 +2,7 @@
   "$schema": "https://antigravity.google/schemas/v1/plugin.json",
   "name": "lanxi-memory",
   "displayName": "蓝汐 · 潮汐认知图谱",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "logo": "assets/logo.svg",
   "description": "蓝汐 · 潮汐认知图谱（Lanxi Memory）— 纯本地长期记忆与认知图谱插件：融合五层 Markdown 真源文档（定海锚点/自我/结构/知识/情景/目标/待决）与幂律潮汐遗忘曲线，支持 CJK FTS5 全文检索、项目优先召回、硬保护防失忆、磁盘修改实时感知、人设记忆开关联动、可选 AI 混合语义检索/智能凝结，以及「潮汐星海」可视化星图工作台。",
   "suggestedPrompts": [
