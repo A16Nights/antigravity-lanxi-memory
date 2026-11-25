@@ -88,11 +88,12 @@ Works completely offline with zero API keys; optionally connect any OpenAI-compa
 - Runs 100% locally offline without any API key.
 - Optionally configure any OpenAI-compatible endpoint in Maintenance to unlock **Hybrid Vector Search (FTS5 + Cosine Similarity)** and **AI Distillation** (condensing scattered `episodic` notes into dense `knowledge` nodes).
 
-### 6. External Knowledge Sync, Project Briefing, Provenance Rollback & Cross-Tool MCP Share (v1.3.0)
+### 6. External Knowledge Sync, Project Briefing, Provenance Rollback & Cross-Tool MCP Share
 - **📚 External Knowledge Directory Incremental Sync**: Bind local Markdown/text note directories read-only; incrementally chunks and indexes modified files into FTS5 by mtime & hash without touching source files, and surfaces matches automatically during recall.
 - **🗺️ Project Briefing (Living Map)**: Aggregates per-project structural rules, active goals, open mysteries, and key lessons into a compact `SessionStart` briefing with live preview and one-click copy in the workbench.
 - **🔗 Conversation Provenance & `.bak` Auto-Rollback**: Records `conversationId#stepIndex` on auto-ingested nodes (one-click session ID copy) and automatically saves up to 5 `vault/.backups/*.bak.md` snapshots before overwriting, with one-click rollback in UI or MCP.
-- **🔌 One-Click Cross-Tool MCP Sharing**: Generates ready-to-paste `mcpServers` JSON and Claude Code CLI commands in the panel so Claude Code, Cursor, Codex, and DSH can share the exact same Lanxi Memory vault.
+- **🛡️ 2.35.1+ Resume Dedup & Single-Truth Deduplication**: Prevents duplicate auto-ingest on Antigravity 2.35.1+ session resume; automatically prunes cross-folder duplicate files into `vault/.backups/` during archive/layer transitions and index rebuilds so disk files always match SQLite counts.
+- **🔌 One-Click Cross-Tool MCP Sharing**: Generates ready-to-paste `mcpServers` JSON and Claude Code CLI commands in the panel so Claude Code, Cursor, and Codex can share the exact same Lanxi Memory vault.
 
 ### 7. Unified Azure Suite UI
 - **Neko Glass UI & Shared Theme Center**: Light/dark themes, custom glass dropdowns & modals, 6 official presets + custom dual pickers + 4 shared slots, sidebar toggle, fullscreen `Web UI`, and GitHub Release update checks.
